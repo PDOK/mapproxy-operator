@@ -44,7 +44,6 @@ linters:
     - nakedret
     - nestif
     - nilerr
-    - nolintlint
     - nosprintfhostport
     - perfsprint
     - predeclared
