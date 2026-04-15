@@ -70,9 +70,12 @@ type WMTSService struct {
 	// AccessConstraints URL
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
 	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
-	TileMatrixSets    []TileMatrixSet         `json:"tileMatrixSets"`
-	Layers            []WMTSLayer             `json:"layers"`
-	Cache             WMTSCache               `json:"cache"`
+	// Predefined tile matrices
+	TileMatrixSets []TileMatrixSet `json:"tileMatrixSets"`
+	// Queryable layers
+	Layers []WMTSLayer `json:"layers"`
+	// Backing cache layer configuration
+	Cache WMTSCache `json:"cache"`
 }
 
 // HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
@@ -104,43 +107,71 @@ type TileMatrixSet struct {
 
 // WMTSLayer describes the layer provided to the service consumer
 type WMTSLayer struct {
-	//
-	Identifier string           `json:"identifier"`
-	Title      string           `json:"title"`
-	Abstract   string           `json:"abstract"`
-	Styles     []WMTSLayerStyle `json:"styles"`
-	Source     WMTSLayerSource  `json:"source"`
+	// The unique reference of the layer
+	// +kubebuilder:validation:MinLength:=1
+	Identifier string `json:"identifier"`
+	// The title of the layer
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+	// The abstract of the layer
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+	// Applied styles to the layer
+	Styles []WMTSLayerStyle `json:"styles"`
+	// The backing data source of the layer
+	Source WMTSLayerSource `json:"source"`
 }
 
+// WMTSLayerStyle
 type WMTSLayerStyle struct {
-	Identifier string      `json:"identifier"`
-	Legend     StyleLegend `json:"legend"`
+	// The style identifier unique for the layer
+	// +kubebuilder:validation:MinLength:=1
+	Identifier string `json:"identifier"`
+	// Legend information
+	Legend StyleLegend `json:"legend"`
 }
 
+// StyleLegend Legend information, now a small wrapper around a blob key
 type StyleLegend struct {
+	// Blob key location of the style
+	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
 }
 
 type WMTSLayerSource struct {
+	// A WMS as a data source
 	Wms SourceWMS `json:"wms"`
 }
 
 type SourceWMS struct {
+	// The WMS url used for retrieving maps
 	URL smoothoperatormodel.URL `json:"url"`
-	// +kubebuilder:default:=false
+	// The generated images have a transparent background
+	// +kubebuilder:default:=true
 	// +kubebuilder:validation:Optional
-	Transparent *bool    `json:"transparent,omitempty"`
-	Layers      []string `json:"layers"`
-	Styles      []string `json:"styles"`
+	Transparent *bool `json:"transparent,omitempty"`
+	// References to layer names
+	Layers []string `json:"layers"`
+	// References to style names
+	Styles []string `json:"styles"`
 }
 
+// WMTSCache Information used to retrieve cached data
 type WMTSCache struct {
+	// Cache retrieval dimensions
+	// +kubebuilder:default="[9,9]"
 	// +kubebuilder:validation:Pattern="^\\[[0-9],[0-9]\\]$"
-	MetaSize string     `json:"metaSize"`
-	Azure    AzureCache `json:"azure"`
+	MetaSize string `json:"metaSize"`
+	// The azure block. At the moment it is the only cache backing option
+	Azure AzureCache `json:"azure"`
 }
 
+// AzureCache Cache information based on the Azure Blob Store
 type AzureCache struct {
-	Container  string `json:"container"`
+	// The blob storage container
+	// +kubebuilder:validation:MinLength:=1
+	Container string `json:"container"`
+	// The blob store prefix on the container
+	// +kubebuilder:validation:MinLength:=1
 	BlobPrefix string `json:"blobPrefix"`
 }

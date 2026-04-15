@@ -11,6 +11,7 @@ import (
 var (
 	GroupVersion  = schema.GroupVersion{Group: "pdok.nl", Version: "v2"}
 	SchemaBuilder = &scheme.Builder{GroupVersion: GroupVersion}
+	GroupKind     = schema.GroupKind{Group: GroupVersion.Group, Kind: "WMTS"}
 	AddToScheme   = SchemaBuilder.AddToScheme
 	TypeMetaWMTS  = runtime.TypeMeta{
 		Kind:       "WMTS",

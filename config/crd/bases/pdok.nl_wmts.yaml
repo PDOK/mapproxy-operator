@@ -758,18 +758,27 @@ spec:
                     pattern: ^https?://.+/.+
                     type: string
                   cache:
+                    description: Backing cache layer configuration
                     properties:
                       azure:
+                        description: The azure block. At the moment it is the only
+                          cache backing option
                         properties:
                           blobPrefix:
+                            description: The blob store prefix on the container
+                            minLength: 1
                             type: string
                           container:
+                            description: The blob storage container
+                            minLength: 1
                             type: string
                         required:
                         - blobPrefix
                         - container
                         type: object
                       metaSize:
+                        default: '[9,9]'
+                        description: Cache retrieval dimensions
                         pattern: ^\[[0-9],[0-9]\]$
                         type: string
                     required:
@@ -777,30 +786,42 @@ spec:
                     - metaSize
                     type: object
                   layers:
+                    description: Queryable layers
                     items:
                       description: WMTSLayer describes the layer provided to the service
                         consumer
                       properties:
                         abstract:
+                          description: The abstract of the layer
+                          minLength: 1
                           type: string
                         identifier:
+                          description: The unique reference of the layer
+                          minLength: 1
                           type: string
                         source:
+                          description: The backing data source of the layer
                           properties:
                             wms:
+                              description: A WMS as a data source
                               properties:
                                 layers:
+                                  description: References to layer names
                                   items:
                                     type: string
                                   type: array
                                 styles:
+                                  description: References to style names
                                   items:
                                     type: string
                                   type: array
                                 transparent:
-                                  default: false
+                                  default: true
+                                  description: The generated images have a transparent
+                                    background
                                   type: boolean
                                 url:
+                                  description: The WMS url used for retrieving maps
                                   pattern: ^https?://.+/.+
                                   type: string
                               required:
@@ -812,13 +833,20 @@ spec:
                           - wms
                           type: object
                         styles:
+                          description: Applied styles to the layer
                           items:
+                            description: WMTSLayerStyle
                             properties:
                               identifier:
+                                description: The style identifier unique for the layer
+                                minLength: 1
                                 type: string
                               legend:
+                                description: Legend information
                                 properties:
                                   blobKey:
+                                    description: Blob key location of the style
+                                    minLength: 1
                                     type: string
                                 required:
                                 - blobKey
@@ -829,6 +857,8 @@ spec:
                             type: object
                           type: array
                         title:
+                          description: The title of the layer
+                          minLength: 1
                           type: string
                       required:
                       - abstract
@@ -839,6 +869,7 @@ spec:
                       type: object
                     type: array
                   tileMatrixSets:
+                    description: Predefined tile matrices
                     items:
                       description: TileMatrixSet specifies the predefined tile matrices
                         per CRS
