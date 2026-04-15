@@ -21,6 +21,7 @@ import (
 	"flag"
 	"os"
 
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -50,6 +51,8 @@ func init() {
 
 // nolint:gocyclo,funlen
 func main() {
+	_ = smoothoperatorv1.OwnerInfo{}
+
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
 	var webhookCertPath, webhookCertName, webhookCertKey string
