@@ -2,11 +2,13 @@ name: Lint
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 jobs:
   lint:
-    name: Run on Ubuntu
+    name: Linting on Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code
@@ -17,7 +19,7 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Check linter configuration
-        run: make lint-config
       - name: Run linter
-        run: make lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.5.0

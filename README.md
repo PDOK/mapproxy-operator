@@ -1,10 +1,15 @@
-# mapserver-operator
-_Kubernetes controller/operator to serve WFS and WMS instances._
+# mapproxy-operator
+_Kubernetes controller/operator to serve WMTS instances._
 
-[![GitHub license](https://img.shields.io/github/license/PDOK/mapserver-operator)](https://github.com/PDOK/mapserver-operator/blob/master/LICENSE)
+[![Build](https://github.com/PDOK/mapproxy-operator/actions/workflows/build-and-publish-image.yml/badge.svg)](https://github.com/PDOK/mapproxy-operator/actions/workflows/build-and-publish-image.yml)
+[![Lint (go)](https://github.com/PDOK/mapproxy-operator/actions/workflows/lint.yml/badge.svg)](https://github.com/PDOK/mapproxy-operator/actions/workflows/lint.yml)
+[![GitHub license](https://img.shields.io/github/license/PDOK/mapproxy-operator)](https://github.com/PDOK/mapproxy-operator/blob/master/LICENSE)
 
 ## Description
-TODO: Add description
+This Kubernetes controller cq operator (an operator could be described as a specialized controller)
+ensures that the necessary resources are created or kept up-to-date in a cluster
+to deploy instances of the [Web Map Tile Service](https://www.ogc.org/standards/wmts/)(WMTS). This repository is a complete solution to deploy WMTS services according to CR schemas.
+This operator uses one Custom Resource(CR) called _WMTS_ as the input for the deployment, which is also defined in this repository.
 
 ## Getting Started
 
@@ -90,7 +95,7 @@ from the root.
 # Contributing
 
 ### How to contribute
-Mapserver-operator is solely developed by PDOK. Contributions are however always welcome. If you have any questions or suggestions you can create an issue in the issue tracker.
+Mapproxy-operator is solely developed by PDOK. Contributions are however always welcome. If you have any questions or suggestions you can create an issue in the issue tracker.
 
 ### Contact
 The maintainers can be contacted through the issue tracker.
