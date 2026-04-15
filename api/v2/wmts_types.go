@@ -2,6 +2,8 @@ package v2
 
 import (
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,4 +27,120 @@ type WMTS struct {
 }
 
 type WMTSSpec struct {
+	Options *WMTSOptions `json:"options,omitempty"`
+	// Optional lifecycle settings
+	Lifecycle                    *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
+	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch  `json:"horizontalPodAutoscalerPatch,omitempty"`
+	// +kubebuilder:validation:Type=object
+	// +kubebuilder:validation:Schemaless
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
+	PodSpecPatch corev1.PodSpec `json:"podSpecPatch"`
+	// Custom healthcheck options
+	HealthCheck      *WMTSHealthCheck                     `json:"healthCheck,omitempty"`
+	IngressRouteURLs smoothoperatormodel.IngressRouteURLs `json:"ingressRouteUrls,omitempty"`
+	// service configuration
+	Service WMTSService `json:"service"`
+}
+
+type WMTSOptions struct {
+	// Cached enables the pregenerated tiles from a permanent storage
+	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
+	Cached bool `json:"cached"`
+	// IncludeIngress dictates whether to deploy an Ingress or ensure none exists.
+	// +kubebuilder:default:=true
+	// +kubebuilder:validation:Optional
+	IncludeIngress bool `json:"includeIngress"`
+	// GetFeatureInfo adds a GetFeatureInfo endpoint
+	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
+	GetFeatureInfo bool `json:"getFeatureInfo"`
+}
+
+type WMTSService struct {
+	// Base url. Distinguished from an actual URL as the path can also be used as a base path for other URLs
+	BaseURL smoothoperatormodel.URL `json:"baseUrl"`
+	// Service title
+	// +kubebuilder:validation:MinLength:=1
+	Title string `json:"title"`
+	// Service abstract
+	// +kubebuilder:validation:MinLength:=1
+	Abstract string `json:"abstract"`
+	// AccessConstraints URL
+	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
+	TileMatrixSets    []TileMatrixSet         `json:"tileMatrixSets"`
+	Layers            []WMTSLayer             `json:"layers"`
+	Cache             WMTSCache               `json:"cache"`
+}
+
+// HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
+// This way we don't have to specify the scaleTargetRef field in the CRD.
+type HorizontalPodAutoscalerPatch struct {
+	MinReplicas *int32                                         `json:"minReplicas,omitempty"`
+	MaxReplicas *int32                                         `json:"maxReplicas,omitempty"`
+	Metrics     []autoscalingv2.MetricSpec                     `json:"metrics,omitempty"`
+	Behavior    *autoscalingv2.HorizontalPodAutoscalerBehavior `json:"behavior,omitempty"`
+}
+
+// WMTSHealthCheck is the struct with all fields to configure custom healthchecks
+type WMTSHealthCheck struct {
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('service=wmts')",message="a valid healthcheck contains 'Service=WMTS'"
+	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('request=')",message="a valid healthcheck contains 'Request='"
+	Querystring string `json:"querystring"`
+	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
+	Mimetype string `json:"mimetype"`
+}
+
+// TileMatrixSet specifies the predefined tile matrices per CRS
+type TileMatrixSet struct {
+	// The specified CRS
+	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|WGS84$"
+	CRS string `json:"crs"`
+	// +kubebuilder:validation:items:Pattern:="^[0-9]{1,2}(-[0-9]{1,2})?$"
+	ZoomLevels []string `json:"zoomLevels"`
+}
+
+// WMTSLayer describes the layer provided to the service consumer
+type WMTSLayer struct {
+	//
+	Identifier string           `json:"identifier"`
+	Title      string           `json:"title"`
+	Abstract   string           `json:"abstract"`
+	Styles     []WMTSLayerStyle `json:"styles"`
+	Source     WMTSLayerSource  `json:"source"`
+}
+
+type WMTSLayerStyle struct {
+	Identifier string      `json:"identifier"`
+	Legend     StyleLegend `json:"legend"`
+}
+
+type StyleLegend struct {
+	BlobKey string `json:"blobKey"`
+}
+
+type WMTSLayerSource struct {
+	Wms SourceWMS `json:"wms"`
+}
+
+type SourceWMS struct {
+	URL smoothoperatormodel.URL `json:"url"`
+	// +kubebuilder:default:=false
+	// +kubebuilder:validation:Optional
+	Transparent *bool    `json:"transparent,omitempty"`
+	Layers      []string `json:"layers"`
+	Styles      []string `json:"styles"`
+}
+
+type WMTSCache struct {
+	// +kubebuilder:validation:Pattern="^\\[[0-9],[0-9]\\]$"
+	MetaSize string     `json:"metaSize"`
+	Azure    AzureCache `json:"azure"`
+}
+
+type AzureCache struct {
+	Container  string `json:"container"`
+	BlobPrefix string `json:"blobPrefix"`
 }
