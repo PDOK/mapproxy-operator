@@ -13,6 +13,9 @@ Dockerfile.cross
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Kubebuilder build artifacts
+/dist
+
 # Go workspace file
 go.work
 
