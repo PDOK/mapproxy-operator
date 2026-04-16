@@ -49,6 +49,7 @@ spec:
           metadata:
             type: object
           spec:
+            description: Functional settings
             properties:
               healthCheck:
                 description: Custom healthcheck options
@@ -58,19 +59,12 @@ spec:
                     type: string
                   querystring:
                     type: string
-                    x-kubernetes-validations:
-                    - message: a valid healthcheck contains 'Service=WMTS'
-                      rule: self.lowerAscii().contains('service=wmts')
-                    - message: a valid healthcheck contains 'Request='
-                      rule: self.lowerAscii().contains('request=')
                 required:
                 - mimetype
                 - querystring
                 type: object
               horizontalPodAutoscalerPatch:
-                description: |-
-                  HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
-                  This way we don't have to specify the scaleTargetRef field in the CRD.
+                description: Scaling behavior
                 properties:
                   behavior:
                     description: |-
@@ -697,9 +691,7 @@ spec:
                     type: integer
                 type: object
               ingressRouteUrls:
-                description: |-
-                  IngressRouteURLs
-                  Without maxItems x-kubernetes-validation complains about an exceeded computation budget as the list can grow infinitely in theory
+                description: Alternative ingress urls
                 items:
                   properties:
                     url:
@@ -719,6 +711,7 @@ spec:
                     type: integer
                 type: object
               options:
+                description: Boolean options
                 properties:
                   cached:
                     default: true
@@ -905,7 +898,7 @@ spec:
             - service
             type: object
           status:
-            description: OperatorStatus defines the observed state of an Atom/WFS/WMS/OGCAPI/...
+            description: Status set by the cluster
             properties:
               conditions:
                 description: |-

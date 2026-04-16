@@ -22,22 +22,27 @@ import (
 type WMTS struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              WMTSSpec                           `json:"spec"`
-	Status            smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
+	// Functional settings
+	Spec WMTSSpec `json:"spec"`
+	// Status set by the cluster
+	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
 }
 
 type WMTSSpec struct {
+	// Boolean options
 	Options *WMTSOptions `json:"options,omitempty"`
 	// Optional lifecycle settings
-	Lifecycle                    *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
-	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch  `json:"horizontalPodAutoscalerPatch,omitempty"`
+	Lifecycle *smoothoperatormodel.Lifecycle `json:"lifecycle,omitempty"`
+	// Scaling behavior
+	HorizontalPodAutoscalerPatch *HorizontalPodAutoscalerPatch `json:"horizontalPodAutoscalerPatch,omitempty"`
 	// +kubebuilder:validation:Type=object
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Strategic merge patch for the pod in the deployment. E.g. to patch the resources or add extra env vars.
 	PodSpecPatch corev1.PodSpec `json:"podSpecPatch"`
 	// Custom healthcheck options
-	HealthCheck      *WMTSHealthCheck                     `json:"healthCheck,omitempty"`
+	HealthCheck *WMTSHealthCheck `json:"healthCheck,omitempty"`
+	// Alternative ingress urls
 	IngressRouteURLs smoothoperatormodel.IngressRouteURLs `json:"ingressRouteUrls,omitempty"`
 	// service configuration
 	Service WMTSService `json:"service"`
@@ -89,8 +94,6 @@ type HorizontalPodAutoscalerPatch struct {
 
 // WMTSHealthCheck is the struct with all fields to configure custom healthchecks
 type WMTSHealthCheck struct {
-	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('service=wmts')",message="a valid healthcheck contains 'Service=WMTS'"
-	// +kubebuilder:validation:XValidation:rule="self.lowerAscii().contains('request=')",message="a valid healthcheck contains 'Request='"
 	Querystring string `json:"querystring"`
 	// +kubebuilder:validation:Pattern=(image/png|text/xml|text/html)
 	Mimetype string `json:"mimetype"`
