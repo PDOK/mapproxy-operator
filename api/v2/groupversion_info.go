@@ -3,7 +3,7 @@
 package v2
 
 import (
-	"k8s.io/apimachinery/pkg/runtime"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
 )
@@ -13,7 +13,7 @@ var (
 	SchemaBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 	GroupKind     = schema.GroupKind{Group: GroupVersion.Group, Kind: "WMTS"}
 	AddToScheme   = SchemaBuilder.AddToScheme
-	TypeMetaWMTS  = runtime.TypeMeta{
+	TypeMetaWMTS  = metav1.TypeMeta{
 		Kind:       "WMTS",
 		APIVersion: GroupVersion.String(),
 	}

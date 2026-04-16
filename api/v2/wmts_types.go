@@ -73,8 +73,9 @@ type WMTSService struct {
 	// +kubebuilder:validation:MinLength:=1
 	Abstract string `json:"abstract"`
 	// AccessConstraints URL
+	// +kubebuilder:validation:Optional
 	// +kubebuilder:default="https://creativecommons.org/publicdomain/zero/1.0/deed.nl"
-	AccessConstraints smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
+	AccessConstraints *smoothoperatormodel.URL `json:"accessConstraints,omitempty"`
 	// Predefined tile matrices
 	TileMatrixSets []TileMatrixSet `json:"tileMatrixSets"`
 	// Queryable layers

@@ -11,7 +11,7 @@ repo: github.com/pdok/mapproxy-operator
 version: "3"
 resources:
 - api:
-    crdVersion: v1
+    crdVersion: v2
     namespaced: true
   controller: true
   domain: pdok.nl

@@ -14,6 +14,7 @@ type WMTSSpec struct {
 	General    GeneralLabels      `json:"general"`
 	Kubernetes KubernetesSettings `json:"kubernetes"`
 	Options    Options            `json:"options"`
+	Service    Service            `json:"service"`
 }
 
 type GeneralLabels struct {
@@ -24,8 +25,8 @@ type GeneralLabels struct {
 }
 
 type KubernetesSettings struct {
-	Autoscaling Autoscaling `json:"autoscaling"`
-	HealthCheck HealthCheck `json:"healthCheck"`
+	Autoscaling *Autoscaling `json:"autoscaling"`
+	HealthCheck HealthCheck  `json:"healthCheck"`
 }
 
 type Autoscaling struct {
@@ -52,6 +53,7 @@ type Service struct {
 	AccessConstraints string         `json:"accessConstraints"`
 	GetFeatureInfo    bool           `json:"getFeatureInfo"`
 	SupportedSrs      []SupportedSrs `json:"supportedSrs"`
+	Layers            []Layer        `json:"layers"`
 }
 
 type SupportedSrs struct {
@@ -68,7 +70,7 @@ type Layer struct {
 }
 
 type WmsSource struct {
-	Url         string   `json:"url"`
+	URL         string   `json:"url"`
 	Layers      []string `json:"layers,omitempty"`
 	Transparent *bool    `json:"transparent"`
 	Styles      []string `json:"styles,omitempty"`
