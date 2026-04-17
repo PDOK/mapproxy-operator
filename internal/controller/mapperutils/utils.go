@@ -34,3 +34,16 @@ func GetContainerResourceLimit(obj *pdoknlv2.WMTS, containerName string, resourc
 
 	return nil
 }
+
+func GetContainerResourceRequest(obj *pdoknlv2.WMTS, containerName string, resource corev1.ResourceName) *resource.Quantity {
+	for _, container := range obj.Spec.PodSpecPatch.Containers {
+		if container.Name == containerName {
+			q := container.Resources.Requests[resource]
+			if !q.IsZero() {
+				return &q
+			}
+		}
+	}
+
+	return nil
+}

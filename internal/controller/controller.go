@@ -165,7 +165,7 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	// end region HorizontalAutoScaler
 
 	// region IngressRoute
-	if obj.Options().IncludeIngress {
+	if obj.Spec.Options.IncludeIngress {
 		ingress := getBareIngressRoute(obj)
 		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, ingress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, ingress, func() error {
 			return mutateIngressRoute(r, obj, ingress)
@@ -193,18 +193,13 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 
 func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) {
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(*WMTSReconciler, *pdoknlv2.WMTS, *corev1.ConfigMap) error)
-	configMaps[constants.MapserverName] = mutateConfigMap
-	if obj.Mapfile() == nil {
-		configMaps[constants.MapfileGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
-			return mutateConfigMapMapfileGenerator(r, o, cm)
-		}
-	}
-	configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
-		return mutateConfigMapCapabilitiesGenerator(r, o, cm)
-	}
+	//configMaps[constants.MapserverName] = mutateConfigMap
+	//configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+	//	return mutateConfigMapCapabilitiesGenerator(r, o, cm)
+	//}
 
 	for cmName, mutate := range configMaps {
-		cm, or, err := createOrUpdateConfigMap(ctx, obj, r, cmName, func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+		cm, or, err := createOrUpdateConfigMap(ctx, r, obj, cmName, func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
 			return mutate(r, o, cm)
 		})
 		if or != nil {
@@ -214,20 +209,20 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 			return hashedConfigMapNames, operationResults, err
 		}
 		switch cmName {
-		case constants.MapserverName:
-			hashedConfigMapNames.Mapserver = cm.Name
-		case constants.MapfileGeneratorName:
-			hashedConfigMapNames.MapfileGenerator = cm.Name
-		case constants.CapabilitiesGeneratorName:
-			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
-		case constants.InitScriptsName:
-			hashedConfigMapNames.InitScripts = cm.Name
-		case constants.LegendGeneratorName:
-			hashedConfigMapNames.LegendGenerator = cm.Name
-		case constants.FeatureinfoGeneratorName:
-			hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-		case constants.OgcWebserviceProxyName:
-			hashedConfigMapNames.OgcWebserviceProxy = cm.Name
+		//case constants.MapserverName:
+		//	hashedConfigMapNames.Mapserver = cm.Name
+		//case constants.MapfileGeneratorName:
+		//	hashedConfigMapNames.MapfileGenerator = cm.Name
+		//case constants.CapabilitiesGeneratorName:
+		//	hashedConfigMapNames.CapabilitiesGenerator = cm.Name
+		//case constants.InitScriptsName:
+		//	hashedConfigMapNames.InitScripts = cm.Name
+		//case constants.LegendGeneratorName:
+		//	hashedConfigMapNames.LegendGenerator = cm.Name
+		//case constants.FeatureinfoGeneratorName:
+		//	hashedConfigMapNames.FeatureInfoGenerator = cm.Name
+		//case constants.OgcWebserviceProxyName:
+		//	hashedConfigMapNames.OgcWebserviceProxy = cm.Name
 		}
 	}
 
@@ -244,12 +239,12 @@ func mutateConfigMap(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.Co
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
 
-	updateConfigMapWithStaticFiles(configMap, obj)
+	//updateConfigMapWithStaticFiles(configMap, obj)
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
 		return err
 	}
-	if err := ctrl.SetControllerReference(obj, configMap, getReconcilerScheme(r)); err != nil {
+	if err := ctrl.SetControllerReference(obj, configMap, r.Scheme); err != nil {
 		return err
 	}
 	return smoothoperatorutils.AddHashSuffix(configMap)
@@ -291,4 +286,32 @@ func getBareConfigMap(obj *pdoknlv2.WMTS, name string) *corev1.ConfigMap {
 			Namespace: obj.GetNamespace(),
 		},
 	}
+}
+
+func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *WMTSReconciler, obj *pdoknlv2.WMTS, operationResults map[string]controllerutil.OperationResult) (err error) {
+	reconcilerClient := reconciler.Client
+	podDisruptionBudget := getBarePodDisruptionBudget(obj)
+	autoscalerPatch := obj.Spec.HorizontalPodAutoscalerPatch
+	if autoscalerPatch != nil && autoscalerPatch.MinReplicas != nil && autoscalerPatch.MaxReplicas != nil &&
+		*autoscalerPatch.MinReplicas == 1 && *autoscalerPatch.MaxReplicas == 1 {
+		err = reconcilerClient.Delete(ctx, podDisruptionBudget)
+		if err == nil {
+			operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)] = "deleted"
+		}
+		if client.IgnoreNotFound(err) != nil {
+			return fmt.Errorf("unable to delete resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget), err)
+		}
+	} else {
+		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, podDisruptionBudget, func() error {
+			return mutatePodDisruptionBudget(reconciler, obj, podDisruptionBudget)
+		})
+		if err != nil {
+			return fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, podDisruptionBudget), err)
+		}
+	}
+	return nil
+}
+
+func addCommonLabels(obj *pdoknlv2.WMTS, labels map[string]string) map[string]string {
+	return labels
 }
