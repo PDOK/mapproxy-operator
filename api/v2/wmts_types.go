@@ -106,7 +106,7 @@ type TileMatrixSet struct {
 	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|WGS84$"
 	CRS string `json:"crs"`
 	// +kubebuilder:validation:items:Pattern:="^[0-9]{1,2}(-[0-9]{1,2})?$"
-	ZoomLevels []string `json:"zoomLevels"`
+	ZoomLevels []string `json:"zoomLevels,omitempty"`
 }
 
 // WMTSLayer describes the layer provided to the service consumer

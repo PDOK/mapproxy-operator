@@ -878,7 +878,6 @@ spec:
                           type: array
                       required:
                       - crs
-                      - zoomLevels
                       type: object
                     type: array
                   title:

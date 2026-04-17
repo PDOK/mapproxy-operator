@@ -150,6 +150,10 @@ func (i *intRange) String() string {
 
 func getZoomLevels(srsSet SupportedSrs) []string {
 	result := make([]string, 0)
+	if srsSet.ZoomLevels == nil {
+		return nil
+	}
+
 	if len(srsSet.ZoomLevels) == 0 {
 		return result
 	}
