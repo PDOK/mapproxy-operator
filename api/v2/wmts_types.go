@@ -1,6 +1,8 @@
 package v2
 
 import (
+	"strings"
+
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -26,6 +28,20 @@ type WMTS struct {
 	Spec WMTSSpec `json:"spec"`
 	// Status set by the cluster
 	Status smoothoperatormodel.OperatorStatus `json:"status,omitempty"`
+}
+
+func (w *WMTS) OperatorStatus() *smoothoperatormodel.OperatorStatus {
+	return &w.Status
+}
+
+func (w *WMTS) TypedName() string {
+	name := w.GetName()
+	typeSuffix := strings.ToLower("WMTS")
+	if strings.HasSuffix(name, typeSuffix) {
+		return name
+	}
+
+	return name + "-" + typeSuffix
 }
 
 type WMTSSpec struct {
