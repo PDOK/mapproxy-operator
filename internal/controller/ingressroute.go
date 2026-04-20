@@ -50,7 +50,7 @@ func mutateIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *tra
 		)
 	}
 
-	mapserverService := traefikiov1alpha1.Service{
+	mapproxyService := traefikiov1alpha1.Service{
 		LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
 			Name: getBareService(obj).GetName(),
 			Kind: "Service",
@@ -76,7 +76,7 @@ func mutateIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *tra
 
 	ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{}
 	for _, ingressRouteURL := range obj.Spec.IngressRouteURLs {
-		ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapserverService, middlewareRef))
+		ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapproxyService, middlewareRef))
 	}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
