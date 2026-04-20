@@ -6,7 +6,7 @@ cliVersion: 4.13.1
 domain: pdok.nl
 layout:
 - go.kubebuilder.io/v4
-projectName: mapproxy-operator-go
+projectName: mapproxy-operator
 repo: github.com/pdok/mapproxy-operator
 version: "3"
 resources:

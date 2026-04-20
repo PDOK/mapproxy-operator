@@ -1,0 +1,5 @@
+resources:
+  - bases/pdok.nl_wmts.yaml
+
+configurations:
+  - kustomizeconfig.yaml

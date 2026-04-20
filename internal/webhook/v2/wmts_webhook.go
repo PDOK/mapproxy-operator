@@ -17,6 +17,8 @@ func SetupWMTSWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr, &v2.WMTS{}).WithValidator(&WMTSCustomValidator{mgr.GetClient()}).Complete()
 }
 
+// +kubebuilder:webhook:path=/validate-pdok-nl-v2-wmts,mutating=false,failurePolicy=fail,sideEffects=None,groups=pdok.nl,resources=wmts,verbs=create;update,versions=v2,name=vwfs-v3.kb.io,admissionReviewVersions=v1
+
 type WMTSCustomValidator struct {
 	Client client.Client
 }
