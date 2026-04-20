@@ -9,6 +9,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func init() {
+	SchemeBuilder.Register(&WMTS{}, &WMTSList{})
+}
+
 // +kubebuilder:object:root=true
 // +kubebuilder:storageversion
 // +kubebuilder:conversion:hub
@@ -42,6 +46,13 @@ func (w *WMTS) TypedName() string {
 	}
 
 	return name + "-" + typeSuffix
+}
+
+// +kubebuilder:object:root=true
+type WMTSList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []WMTS `json:"items"`
 }
 
 type WMTSSpec struct {

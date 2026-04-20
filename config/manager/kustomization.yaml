@@ -5,4 +5,11 @@ kind: Kustomization
 images:
 - name: controller
   newName: local-registry:5000/mapproxy-operator
-  newTag: v0.0.10
+  newTag: v0.0.16
+
+secretGenerator:
+- files:
+  - certs/tls.crt
+  - certs/tls.key
+  - certs/ca.crt
+  name: operator-certificates
