@@ -5,7 +5,7 @@ metadata:
     app.kubernetes.io/name: mapproxy-operator
     app.kubernetes.io/managed-by: kustomize
   name: webhook-service
-  namespace: system
+  namespace: services
 spec:
   ports:
     - port: 443
