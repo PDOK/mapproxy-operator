@@ -23,7 +23,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-var _ = Describe("WFS Webhook", func() {
+var _ = Describe("WMTS Webhook", func() {
 	var (
 		obj       *pdoknlv2.WMTS
 		oldObj    *pdoknlv2.WMTS
@@ -36,7 +36,7 @@ var _ = Describe("WFS Webhook", func() {
 
 		sample := &pdoknlv2.WMTS{}
 		err := readSample(sample)
-		Expect(err).ToNot(HaveOccurred(), "Reading and parsing the WFS V3 sample failed")
+		Expect(err).ToNot(HaveOccurred(), "Reading and parsing the WMTS V2 sample failed")
 
 		obj = sample.DeepCopy()
 		oldObj = sample.DeepCopy()
@@ -49,10 +49,10 @@ var _ = Describe("WFS Webhook", func() {
 
 	})
 
-	Context("When creating or updating WFS under Validating Webhook", func() {
+	Context("When creating or updating WMTS under Validating Webhook", func() {
 		ctx := context.Background()
 
-		It("Creates the WFS from the sample", func() {
+		It("Creates the WMTS from the sample", func() {
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(BeEmpty())
@@ -85,14 +85,14 @@ var _ = Describe("WFS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
-		It("Warns if the name contains WFS", func() {
+		It("Warns if the name contains WMTS", func() {
 			obj.Name += "-wmts"
 			warnings, err := validator.ValidateCreate(ctx, obj)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(warnings).To(Equal(getValidationWarnings(
 				obj,
 				*field.NewPath("metadata").Child("name"),
-				"name should not contain wfs",
+				"name should not contain wmts",
 				[]string{},
 			)))
 		})

@@ -36,11 +36,23 @@ type WMTSReconciler struct {
 	Images types.Images
 }
 
+// +kubebuilder:rbac:groups=pdok.nl,resources=wmts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=pdok.nl,resources=wmts/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=pdok.nl,resources=wmts/finalizers,verbs=update
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=apps,resources=replicasets,verbs=get;list;watch
+// +kubebuilder:rbac:groups=core,resources=configmaps;services,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=watch;list;get
+// +kubebuilder:rbac:groups=autoscaling,resources=horizontalpodautoscalers,verbs=watch;create;get;update;list;delete
+// +kubebuilder:rbac:groups=traefik.io,resources=ingressroutes;middlewares,verbs=get;list;watch;create;update;delete
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets,verbs=create;update;delete;list;watch
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/status,verbs=get;update
+// +kubebuilder:rbac:groups=policy,resources=poddisruptionbudgets/finalizers,verbs=update
 func (r *WMTSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	lgr := log.FromContext(ctx)
 	lgr.Info("Starting reconcile for WMTS resource", "name", req.NamespacedName)
 
-	// Fetch the WFS instance
+	// Fetch the WMTS instance
 	wmts := &pdoknlv2.WMTS{}
 	if err = r.Get(ctx, req.NamespacedName, wmts); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -75,7 +87,7 @@ func (r *WMTSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 		status.LogAndUpdateStatusError(ctx, r.Client, wmts, err)
 		return result, err
 	}
-	lgr.Info("finished creating resources for wfs", "wfs", wmts.Name)
+	lgr.Info("finished creating resources for wmts", "wmts", wmts.Name)
 	status.LogAndUpdateStatusFinished(ctx, r.Client, wmts, operationResults)
 
 	return result, err

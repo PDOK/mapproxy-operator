@@ -15,7 +15,7 @@ resources:
     namespaced: true
   controller: true
   domain: pdok.nl
-  kind: WMS
+  kind: WMTS
   path: github.com/pdok/mapproxy-operator/api/v2
   version: v2
   webhooks:
