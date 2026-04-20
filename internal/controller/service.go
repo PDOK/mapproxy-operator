@@ -35,20 +35,11 @@ func mutateService(r *WMTSReconciler, obj *pdoknlv2.WMTS, service *corev1.Servic
 
 	ports := []corev1.ServicePort{
 		{
-			Name:       constants.MapserverName,
+			Name:       constants.MapproxyName,
 			Port:       constants.MapserverPortNr,
 			TargetPort: intstr.FromInt32(constants.MapserverPortNr),
 			Protocol:   corev1.ProtocolTCP,
 		},
-	}
-
-	if obj.Type() == pdoknlv3.ServiceTypeWMS {
-		if obj.Options().UseWebserviceProxy() {
-			ports = append(ports, corev1.ServicePort{
-				Name: constants.OgcWebserviceProxyName,
-				Port: 9111,
-			})
-		}
 	}
 
 	// Add port here to get the same port order as the odl ansible operator
@@ -73,5 +64,5 @@ func mutateService(r *WMTSReconciler, obj *pdoknlv2.WMTS, service *corev1.Servic
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, service, service); err != nil {
 		return err
 	}
-	return ctrl.SetControllerReference(obj, service, getReconcilerScheme(r))
+	return ctrl.SetControllerReference(obj, service, reconcilerClient.Scheme())
 }

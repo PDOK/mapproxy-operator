@@ -13,6 +13,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
+var storageClassName string
+
+func SetStorageClassName(name string) {
+	storageClassName = name
+}
+
 func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := r.Client
 	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())

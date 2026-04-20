@@ -2,13 +2,13 @@ package types
 
 type HashedConfigMapNames struct {
 	CapabilitiesGenerator string
-	Mapproxy              string
 	KvpToRestful          string
+	Mapproxy              string
 }
 type Images struct {
-	MultiToolImage             string
+	ApacheExporterImage        string
 	CapabilitiesGeneratorImage string
 	KvpToRestfulImage          string
 	MapproxyImage              string
-	ApacheExporterImage        string
+	MultiToolImage             string
 }

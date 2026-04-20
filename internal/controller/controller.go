@@ -9,18 +9,25 @@ import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/mapproxy-operator/internal/controller/constants"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
+	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"github.com/pdok/smooth-operator/pkg/status"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"github.com/pkg/errors"
+	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type WMTSReconciler struct {
@@ -279,15 +286,6 @@ func createOrUpdateConfigMap(ctx context.Context, reconciler *WMTSReconciler, ob
 	return cm, &or, nil
 }
 
-func getBareConfigMap(obj *pdoknlv2.WMTS, name string) *corev1.ConfigMap {
-	return &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, name),
-			Namespace: obj.GetNamespace(),
-		},
-	}
-}
-
 func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *WMTSReconciler, obj *pdoknlv2.WMTS, operationResults map[string]controllerutil.OperationResult) (err error) {
 	reconcilerClient := reconciler.Client
 	podDisruptionBudget := getBarePodDisruptionBudget(obj)
@@ -314,4 +312,25 @@ func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *
 
 func addCommonLabels(obj *pdoknlv2.WMTS, labels map[string]string) map[string]string {
 	return labels
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *WMTSReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return createControllerManager(mgr, &pdoknlv2.WMTS{}).Complete(r)
+}
+
+func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.TypedBuilder[reconcile.Request] {
+	kind := "WMTS"
+
+	controllerMgr := ctrl.NewControllerManagedBy(mgr).For(obj).Named(strings.ToLower(kind))
+	controllerMgr.Owns(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&appsv1.Deployment{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&corev1.Service{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&traefikiov1alpha1.Middleware{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&traefikiov1alpha1.IngressRoute{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&autoscalingv2.HorizontalPodAutoscaler{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Owns(&smoothoperatorv1.OwnerInfo{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
+
+	return controllerMgr.Watches(&appsv1.ReplicaSet{}, status.GetReplicaSetEventHandlerForObj(mgr, kind))
 }
