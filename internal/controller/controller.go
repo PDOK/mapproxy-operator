@@ -9,7 +9,6 @@ import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/mapproxy-operator/internal/controller/constants"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
-	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"github.com/pdok/smooth-operator/pkg/status"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"github.com/pkg/errors"
@@ -341,8 +340,7 @@ func createControllerManager(mgr ctrl.Manager, obj client.Object) *builder.Typed
 		Owns(&traefikiov1alpha1.Middleware{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&traefikiov1alpha1.IngressRoute{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
 		Owns(&autoscalingv2.HorizontalPodAutoscaler{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&smoothoperatorv1.OwnerInfo{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
+		Owns(&policyv1.PodDisruptionBudget{}, builder.WithPredicates(predicate.GenerationChangedPredicate{}))
 
 	return controllerMgr.Watches(&appsv1.ReplicaSet{}, status.GetReplicaSetEventHandlerForObj(mgr, kind))
 }
