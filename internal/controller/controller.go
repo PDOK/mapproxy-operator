@@ -209,8 +209,9 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	return operationResults, nil
 }
 
-func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) {
+func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) { //nolint:revive,unparam
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(*WMTSReconciler, *pdoknlv2.WMTS, *corev1.ConfigMap) error)
+	//nolint:gocritic
 	//configMaps[constants.MapserverName] = mutateConfigMap
 	//configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
 	//	return mutateConfigMapCapabilitiesGenerator(r, o, cm)
@@ -226,8 +227,9 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 		if err != nil {
 			return hashedConfigMapNames, operationResults, err
 		}
-		switch cmName {
-		//case constants.MapserverName:
+		switch cmName { //nolint:revive
+		//nolint:gocritic
+		//case constants.MapserverName: //nolint:gocritic
 		//	hashedConfigMapNames.Mapserver = cm.Name
 		//case constants.MapfileGeneratorName:
 		//	hashedConfigMapNames.MapfileGenerator = cm.Name
@@ -247,7 +249,7 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	return hashedConfigMapNames, operationResults, err
 }
 
-func mutateConfigMap(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.ConfigMap) error {
+func mutateConfigMap(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.ConfigMap) error { //nolint:unused
 	reconcilerClient := r.Client
 	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
@@ -256,7 +258,7 @@ func mutateConfigMap(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.Co
 
 	configMap.Immutable = smoothoperatorutils.Pointer(true)
 	configMap.Data = map[string]string{}
-
+	//nolint:gocritic
 	//updateConfigMapWithStaticFiles(configMap, obj)
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
@@ -321,7 +323,7 @@ func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *
 	return nil
 }
 
-func addCommonLabels(obj *pdoknlv2.WMTS, labels map[string]string) map[string]string {
+func addCommonLabels(obj *pdoknlv2.WMTS, labels map[string]string) map[string]string { //nolint:revive
 	return labels
 }
 

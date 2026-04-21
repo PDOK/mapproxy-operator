@@ -13,7 +13,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-var storageClassName string
+var storageClassName string //nolint:unused
 
 func SetStorageClassName(name string) {
 	storageClassName = name
@@ -94,8 +94,8 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	return ctrl.SetControllerReference(obj, deployment, r.Scheme)
 }
 
-func getInitContainerForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) {
-
+func getInitContainerForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) { //nolint:revive
+	//nolint:gocritic
 	//images := r.Images
 	//blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, *images)
 	//if err != nil {
@@ -118,13 +118,14 @@ func setTerminationMessage(c []corev1.Container) {
 	}
 }
 
-func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container, error) {
+func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container, error) { //nolint:revive
 	containers := []corev1.Container{}
 	return containers, nil
 }
 
-func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume {
+func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
 	return []corev1.Volume{}
+	//nolint:gocritic
 	//baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
 	//if use, size := mapperutils.UseEphemeralVolume(obj); use {
 	//	baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
@@ -204,6 +205,7 @@ func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) [
 
 func getPodAnnotations(deployment *appsv1.Deployment) map[string]string {
 	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
+	//nolint:gocritic
 	//annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
 	//annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
 	//annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`

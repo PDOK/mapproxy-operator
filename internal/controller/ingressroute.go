@@ -112,7 +112,7 @@ func getMatchRule(url smoothoperatormodel.URL) string {
 	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`" + url.Path + "`)"
 }
 
-func getLegendMatchRule(url smoothoperatormodel.URL) string {
+func getLegendMatchRule(url smoothoperatormodel.URL) string { //nolint:unused
 	host := url.Hostname()
 	if strings.Contains(host, "localhost") {
 		return "Host(`localhost`) && PathPrefix(`" + url.Path + "/legend`)"

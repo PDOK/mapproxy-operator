@@ -23,17 +23,17 @@ type WMTSCustomValidator struct {
 	Client client.Client
 }
 
-func (W *WMTSCustomValidator) ValidateCreate(ctx context.Context, obj *v2.WMTS) (warnings admission.Warnings, err error) {
+func (w *WMTSCustomValidator) ValidateCreate(ctx context.Context, obj *v2.WMTS) (warnings admission.Warnings, err error) { //nolint:revive
 	wmtsLog.Info("Validation for WMTS upon creation", "name", obj.Name)
-	return obj.ValidateCreate(W.Client)
+	return obj.ValidateCreate(w.Client)
 }
 
-func (W *WMTSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *v2.WMTS) (warnings admission.Warnings, err error) {
+func (w *WMTSCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj *v2.WMTS) (warnings admission.Warnings, err error) { //nolint:revive
 	wmtsLog.Info("Validation for WMTS upon update", "name", newObj.Name)
-	return newObj.ValidateUpdate(W.Client, oldObj)
+	return newObj.ValidateUpdate(w.Client, oldObj)
 }
 
-func (W *WMTSCustomValidator) ValidateDelete(ctx context.Context, obj *v2.WMTS) (warnings admission.Warnings, err error) {
+func (w *WMTSCustomValidator) ValidateDelete(ctx context.Context, obj *v2.WMTS) (warnings admission.Warnings, err error) { //nolint:revive
 	wmtsLog.Info("Validation for WMTS upon deletion", "name", obj.Name)
 	// No validation as of now
 	return nil, nil

@@ -126,6 +126,7 @@ var _ = Describe("WMTS Webhook", func() {
 			Expect(warnings).To(BeEmpty())
 		})
 
+		//nolint:gocritic
 		//It("Should deny creation if multiple featureTypes have the same name", func() {
 		//	Expect(len(obj.Spec.Service.FeatureTypes)).To(BeNumerically(">", 1))
 		//	obj.Spec.Service.FeatureTypes[1].Name = obj.Spec.Service.FeatureTypes[0].Name
