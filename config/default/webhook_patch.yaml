@@ -1,0 +1,4 @@
+
+- op: add
+  path: /webhooks/0/clientConfig/caBundle
+  value: toBeReplaced
