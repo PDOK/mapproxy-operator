@@ -6,7 +6,7 @@ cliVersion: 4.13.1
 domain: pdok.nl
 layout:
 - go.kubebuilder.io/v4
-projectName: mapproxy-operator-go
+projectName: mapproxy-operator
 repo: github.com/pdok/mapproxy-operator
 version: "3"
 resources:
@@ -15,7 +15,7 @@ resources:
     namespaced: true
   controller: true
   domain: pdok.nl
-  kind: WMS
+  kind: WMTS
   path: github.com/pdok/mapproxy-operator/api/v2
   version: v2
   webhooks:

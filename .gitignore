@@ -32,3 +32,4 @@ go.work
 # Kubeconfig might contain secrets
 *.kubeconfig
 /config/crd/bases/_wmtses.yaml
+/config/manager/certs/

@@ -4,10 +4,10 @@ kind: ServiceMonitor
 metadata:
   labels:
     control-plane: controller-manager
-    app.kubernetes.io/name: mapproxy-operator-go
+    app.kubernetes.io/name: mapproxy-operator
     app.kubernetes.io/managed-by: kustomize
   name: controller-manager-metrics-monitor
-  namespace: system
+  namespace: services
 spec:
   endpoints:
     - path: /metrics
@@ -24,4 +24,4 @@ spec:
   selector:
     matchLabels:
       control-plane: controller-manager
-      app.kubernetes.io/name: mapproxy-operator-go
+      app.kubernetes.io/name: mapproxy-operator

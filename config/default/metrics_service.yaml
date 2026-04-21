@@ -3,10 +3,10 @@ kind: Service
 metadata:
   labels:
     control-plane: controller-manager
-    app.kubernetes.io/name: mapproxy-operator-go
+    app.kubernetes.io/name: mapproxy-operator
     app.kubernetes.io/managed-by: kustomize
   name: controller-manager-metrics-service
-  namespace: system
+  namespace: services
 spec:
   ports:
   - name: https
@@ -15,4 +15,4 @@ spec:
     targetPort: 8443
   selector:
     control-plane: controller-manager
-    app.kubernetes.io/name: mapproxy-operator-go
+    app.kubernetes.io/name: mapproxy-operator

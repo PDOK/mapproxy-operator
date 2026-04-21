@@ -10,9 +10,9 @@ import (
 
 var (
 	GroupVersion  = schema.GroupVersion{Group: "pdok.nl", Version: "v2"}
-	SchemaBuilder = &scheme.Builder{GroupVersion: GroupVersion}
+	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}
 	GroupKind     = schema.GroupKind{Group: GroupVersion.Group, Kind: "WMTS"}
-	AddToScheme   = SchemaBuilder.AddToScheme
+	AddToScheme   = SchemeBuilder.AddToScheme
 	TypeMetaWMTS  = metav1.TypeMeta{
 		Kind:       "WMTS",
 		APIVersion: GroupVersion.String(),

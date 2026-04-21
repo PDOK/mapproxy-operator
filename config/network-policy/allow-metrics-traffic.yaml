@@ -5,15 +5,15 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   labels:
-    app.kubernetes.io/name: mapproxy-operator-go
+    app.kubernetes.io/name: mapproxy-operator
     app.kubernetes.io/managed-by: kustomize
   name: allow-metrics-traffic
-  namespace: system
+  namespace: services
 spec:
   podSelector:
     matchLabels:
       control-plane: controller-manager
-      app.kubernetes.io/name: mapproxy-operator-go
+      app.kubernetes.io/name: mapproxy-operator
   policyTypes:
     - Ingress
   ingress:
