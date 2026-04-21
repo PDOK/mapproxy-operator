@@ -2,6 +2,8 @@ package controller
 
 import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
+	"github.com/pdok/mapproxy-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapproxy-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -37,7 +39,7 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 		},
 	}
 
-	initContainers, err := getInitContainerForDeployment(r, obj)
+	initContainers, err := getInitContainersForDeployment(r, obj)
 	if err != nil {
 		return err
 	}
@@ -94,21 +96,21 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	return ctrl.SetControllerReference(obj, deployment, r.Scheme)
 }
 
-func getInitContainerForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) { //nolint:revive
-	//nolint:gocritic
-	//images := r.Images
-	//blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, *images)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(obj, *images)
-	//if err != nil {
-	//	return nil, err
-	//}
+func getInitContainersForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) { //nolint:revive
+	result := []corev1.Container{}
+	images := r.Images
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, *blobDownloadInitContainer)
+	capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, *capabilitiesGeneratorInitContainer)
 
-	initContainers := []corev1.Container{}
-
-	return initContainers, nil
+	return result, nil
 }
 
 func setTerminationMessage(c []corev1.Container) {
