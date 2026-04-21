@@ -5,7 +5,7 @@ kind: Kustomization
 images:
 - name: controller
   newName: local-registry:5000/mapproxy-operator
-  newTag: v0.0.38
+  newTag: v0.0.39
 
 secretGenerator:
 - files:
