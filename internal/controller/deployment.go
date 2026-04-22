@@ -2,8 +2,10 @@ package controller
 
 import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
+	"github.com/pdok/mapproxy-operator/internal/controller/apacheexporter"
 	"github.com/pdok/mapproxy-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapproxy-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapproxy-operator/internal/controller/kvptorestful"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
@@ -122,6 +124,19 @@ func setTerminationMessage(c []corev1.Container) {
 
 func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container, error) { //nolint:revive
 	containers := []corev1.Container{}
+
+	kvpToRestfulContainer, err := kvptorestful.GetKvpToRestfulContainer(images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *kvpToRestfulContainer)
+
+	apacheContainer, err := apacheexporter.GetApacheContainer(images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *apacheContainer)
+
 	return containers, nil
 }
 
