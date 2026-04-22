@@ -213,9 +213,9 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(*WMTSReconciler, *pdoknlv2.WMTS, *corev1.ConfigMap) error)
 	//nolint:gocritic
 	//configMaps[constants.MapserverName] = mutateConfigMap
-	//configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
-	//	return mutateConfigMapCapabilitiesGenerator(r, o, cm)
-	//}
+	configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+		return mutateConfigMapCapabilitiesGenerator(r, o, cm)
+	}
 
 	for cmName, mutate := range configMaps {
 		cm, or, err := createOrUpdateConfigMap(ctx, r, obj, cmName, func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
@@ -233,16 +233,17 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 		//	hashedConfigMapNames.Mapserver = cm.Name
 		//case constants.MapfileGeneratorName:
 		//	hashedConfigMapNames.MapfileGenerator = cm.Name
-		//case constants.CapabilitiesGeneratorName:
-		//	hashedConfigMapNames.CapabilitiesGenerator = cm.Name
-		//case constants.InitScriptsName:
-		//	hashedConfigMapNames.InitScripts = cm.Name
-		//case constants.LegendGeneratorName:
-		//	hashedConfigMapNames.LegendGenerator = cm.Name
-		//case constants.FeatureinfoGeneratorName:
-		//	hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-		//case constants.OgcWebserviceProxyName:
-		//	hashedConfigMapNames.OgcWebserviceProxy = cm.Name
+		case constants.CapabilitiesGeneratorName:
+			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
+			//nolint:gocritic
+			//case constants.InitScriptsName:
+			//	hashedConfigMapNames.InitScripts = cm.Name
+			//case constants.LegendGeneratorName:
+			//	hashedConfigMapNames.LegendGenerator = cm.Name
+			//case constants.FeatureinfoGeneratorName:
+			//	hashedConfigMapNames.FeatureInfoGenerator = cm.Name
+			//case constants.OgcWebserviceProxyName:
+			//	hashedConfigMapNames.OgcWebserviceProxy = cm.Name
 		}
 	}
 

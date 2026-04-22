@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"strconv"
 	"strings"
 
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
@@ -134,6 +135,26 @@ type TileMatrixSet struct {
 	CRS string `json:"crs"`
 	// +kubebuilder:validation:items:Pattern:="^[0-9]{1,2}(-[0-9]{1,2})?$"
 	ZoomLevels []string `json:"zoomLevels,omitempty"`
+}
+
+// Used for generation of capabilities
+func (t *TileMatrixSet) GetMaxZoomLevel() *int {
+	if len(t.ZoomLevels) == 0 {
+		return nil
+	}
+
+	result := 0
+	for _, zoomLevel := range t.ZoomLevels {
+		split := strings.Split(zoomLevel, "-")
+		if len(split) == 2 {
+			maxVal, _ := strconv.Atoi(split[1])
+			result = max(result, maxVal)
+		} else {
+			maxVal, _ := strconv.Atoi(split[0])
+			result = max(result, maxVal)
+		}
+	}
+	return &result
 }
 
 // WMTSLayer describes the layer provided to the service consumer
