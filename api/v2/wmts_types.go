@@ -8,6 +8,7 @@ import (
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 )
 
 func init() {
@@ -47,6 +48,17 @@ func (w *WMTS) TypedName() string {
 	}
 
 	return name + "-" + typeSuffix
+}
+
+func (w *WMTS) GetWmsUrls() []string {
+	result := []string{}
+	for _, layer := range w.Spec.Service.Layers {
+		wmsUrlString := layer.Source.Wms.URL.String()
+		if !slices.Contains(result, wmsUrlString) {
+			result = append(result, wmsUrlString)
+		}
+	}
+	return result
 }
 
 // +kubebuilder:object:root=true

@@ -7,6 +7,7 @@ import (
 	"github.com/pdok/mapproxy-operator/internal/controller/capabilitiesgenerator"
 	"github.com/pdok/mapproxy-operator/internal/controller/kvptorestful"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapproxy-operator/internal/controller/mapproxy"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -130,6 +131,12 @@ func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container
 		return nil, err
 	}
 	containers = append(containers, *kvpToRestfulContainer)
+
+	mapproxyContainer, err := mapproxy.GetMapproxyContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *mapproxyContainer)
 
 	apacheContainer, err := apacheexporter.GetApacheContainer(images)
 	if err != nil {
