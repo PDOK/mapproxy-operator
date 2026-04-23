@@ -2,7 +2,6 @@ package types //nolint:revive
 
 type HashedConfigMapNames struct {
 	CapabilitiesGenerator string
-	KvpToRestful          string
 	Mapproxy              string
 }
 type Images struct {

@@ -148,7 +148,21 @@ func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container
 }
 
 func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
-	return []corev1.Volume{}
+	return []corev1.Volume{
+		{
+			Name:         "data",
+			VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+		}, {
+			Name:         "mapproxy",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
+		}, {
+			Name:         "lighttpd",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
+		}, {
+			Name:         "capabilities-generator",
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator}}},
+		},
+	}
 	//nolint:gocritic
 	//baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
 	//if use, size := mapperutils.UseEphemeralVolume(obj); use {

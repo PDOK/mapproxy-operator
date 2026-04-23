@@ -11,15 +11,6 @@ import (
 	capabilitiesgenerator "github.com/pdok/ogc-capabilities-generator/pkg/config"
 )
 
-const (
-	inspireSchemaLocationsWFS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd"
-	inspireSchemaLocationsWMS = "http://inspire.ec.europa.eu/schemas/inspire_dls/1.0 http://inspire.ec.europa.eu/schemas/inspire_dls/1.0/inspire_dls.xsd http://inspire.ec.europa.eu/schemas/common/1.0 http://inspire.ec.europa.eu/schemas/common/1.0/common.xsd"
-	wfsCapabilitiesFilename   = "/var/www/config/capabilities_wfs_200.xml"
-	wmsCapabilitiesFilename   = "/var/www/config/capabilities_wms_130.xml"
-	metadataMediaType         = "application/vnd.ogc.csw.GetRecordByIdResponse_xml"
-	XLinkURL                  = "http://www.w3.org/1999/xlink"
-)
-
 func MapWMTSToCapabilitiesGeneratorInput(wmts *v2.WMTS) (*capabilitiesgenerator.Config, error) {
 	accessContraints := wmts.Spec.Service.AccessConstraints
 	accessConstraintsString := "none"

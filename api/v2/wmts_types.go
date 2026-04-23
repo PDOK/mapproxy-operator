@@ -61,6 +61,18 @@ func (w *WMTS) GetWmsUrls() []string {
 	return result
 }
 
+func (w *WMTS) GetIngressRouteUrls() []smoothoperatormodel.URL {
+	if len(w.Spec.IngressRouteURLs) == 0 {
+		return []smoothoperatormodel.URL{w.Spec.Service.BaseURL}
+	} else {
+		result := []smoothoperatormodel.URL{}
+		for _, ingressRoute := range w.Spec.IngressRouteURLs {
+			result = append(result, ingressRoute.URL)
+		}
+		return result
+	}
+}
+
 // +kubebuilder:object:root=true
 type WMTSList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -200,6 +212,11 @@ type StyleLegend struct {
 	// Blob key location of the style
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
+}
+
+func (s *StyleLegend) GetBlobKeyName() string {
+	lastIndex := strings.LastIndex(s.BlobKey, "/")
+	return s.BlobKey[lastIndex+1 : len(s.BlobKey)]
 }
 
 type WMTSLayerSource struct {

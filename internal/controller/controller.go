@@ -217,6 +217,10 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 		return mutateConfigMapCapabilitiesGenerator(r, o, cm)
 	}
 
+	configMaps[constants.MapproxyName] = func(reconciler *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+		return mutateConfigMapMapProxy(r, o, cm)
+	}
+
 	for cmName, mutate := range configMaps {
 		cm, or, err := createOrUpdateConfigMap(ctx, r, obj, cmName, func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
 			return mutate(r, o, cm)
@@ -227,23 +231,11 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 		if err != nil {
 			return hashedConfigMapNames, operationResults, err
 		}
-		switch cmName { //nolint:revive
-		//nolint:gocritic
-		//case constants.MapserverName: //nolint:gocritic
-		//	hashedConfigMapNames.Mapserver = cm.Name
-		//case constants.MapfileGeneratorName:
-		//	hashedConfigMapNames.MapfileGenerator = cm.Name
+		switch cmName {
 		case constants.CapabilitiesGeneratorName:
 			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
-			//nolint:gocritic
-			//case constants.InitScriptsName:
-			//	hashedConfigMapNames.InitScripts = cm.Name
-			//case constants.LegendGeneratorName:
-			//	hashedConfigMapNames.LegendGenerator = cm.Name
-			//case constants.FeatureinfoGeneratorName:
-			//	hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-			//case constants.OgcWebserviceProxyName:
-			//	hashedConfigMapNames.OgcWebserviceProxy = cm.Name
+		case constants.MapproxyName:
+			hashedConfigMapNames.Mapproxy = cm.Name
 		}
 	}
 
