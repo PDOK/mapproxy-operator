@@ -211,11 +211,11 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 
 func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) { //nolint:revive
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(*WMTSReconciler, *pdoknlv2.WMTS, *corev1.ConfigMap) error)
-	configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+	configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error { //nolint:gocritic
 		return mutateConfigMapCapabilitiesGenerator(r, o, cm)
 	}
 
-	configMaps[constants.MapproxyName] = func(reconciler *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
+	configMaps[constants.MapproxyName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error { //nolint:gocritic
 		return mutateConfigMapMapProxy(r, o, cm)
 	}
 

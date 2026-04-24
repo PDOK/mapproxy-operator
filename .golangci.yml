@@ -53,7 +53,6 @@ linters:
     - sloglint
     - sqlclosecheck
     - staticcheck
-    - tagliatelle
     - testableexamples
     - tparallel
     - unconvert

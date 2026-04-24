@@ -48,6 +48,6 @@ func GetConfigVolumeMount(volumeName string) corev1.VolumeMount {
 	return corev1.VolumeMount{Name: volumeName, MountPath: "/input", ReadOnly: true}
 }
 
-//func GetMapfileVolumeMount() corev1.VolumeMount {
+// func GetMapfileVolumeMount() corev1.VolumeMount {
 //	return corev1.VolumeMount{Name: constants.ConfigMapCustomMapfileVolumeName, MountPath: "/srv/data/config/mapfile"}
 //}

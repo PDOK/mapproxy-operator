@@ -228,9 +228,9 @@ func getLayerCapabilities(wmts *v2.WMTS, layer v2.WMTSLayer) wmts100.Layer {
 	}
 
 	for _, style := range layer.Styles {
-		var legendUrl []*wmts100.LegendURL
+		var legendURL []*wmts100.LegendURL
 		if style.Legend.BlobKey != "" {
-			legendUrl = []*wmts100.LegendURL{{
+			legendURL = []*wmts100.LegendURL{{
 				Format: "image/png",
 				Href:   style.Legend.BlobKey,
 			}}
@@ -238,7 +238,7 @@ func getLayerCapabilities(wmts *v2.WMTS, layer v2.WMTSLayer) wmts100.Layer {
 
 		styleCapabilities := wmts100.Style{
 			Identifier: style.Identifier,
-			LegendURL:  legendUrl,
+			LegendURL:  legendURL,
 		}
 		result.Style = append(result.Style, styleCapabilities)
 	}

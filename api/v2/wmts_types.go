@@ -53,9 +53,9 @@ func (w *WMTS) TypedName() string {
 func (w *WMTS) GetWmsUrls() []string {
 	result := []string{}
 	for _, layer := range w.Spec.Service.Layers {
-		wmsUrlString := layer.Source.Wms.URL.String()
-		if !slices.Contains(result, wmsUrlString) {
-			result = append(result, wmsUrlString)
+		wmsURLString := layer.Source.Wms.URL.String()
+		if !slices.Contains(result, wmsURLString) {
+			result = append(result, wmsURLString)
 		}
 	}
 	return result
@@ -64,13 +64,13 @@ func (w *WMTS) GetWmsUrls() []string {
 func (w *WMTS) GetIngressRouteUrls() []smoothoperatormodel.URL {
 	if len(w.Spec.IngressRouteURLs) == 0 {
 		return []smoothoperatormodel.URL{w.Spec.Service.BaseURL}
-	} else {
-		result := []smoothoperatormodel.URL{}
-		for _, ingressRoute := range w.Spec.IngressRouteURLs {
-			result = append(result, ingressRoute.URL)
-		}
-		return result
 	}
+
+	result := []smoothoperatormodel.URL{}
+	for _, ingressRoute := range w.Spec.IngressRouteURLs {
+		result = append(result, ingressRoute.URL)
+	}
+	return result
 }
 
 // +kubebuilder:object:root=true
@@ -169,13 +169,8 @@ func (t *TileMatrixSet) GetMinZoomLevel() *int {
 	result := 99
 	for _, zoomLevel := range t.ZoomLevels {
 		split := strings.Split(zoomLevel, "-")
-		if len(split) == 2 {
-			minVal, _ := strconv.Atoi(split[0])
-			result = min(result, minVal)
-		} else {
-			minVal, _ := strconv.Atoi(split[0])
-			result = min(result, minVal)
-		}
+		minVal, _ := strconv.Atoi(split[0])
+		result = min(result, minVal)
 	}
 	return &result
 }

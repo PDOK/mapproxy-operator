@@ -1,7 +1,6 @@
 package blobdownload
 
 import (
-	_ "embed"
 	"fmt"
 	"strings"
 
