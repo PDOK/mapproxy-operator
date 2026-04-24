@@ -11,27 +11,21 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//go:embed template_include.conf
-var includeTemplate string
-
-//go:embed response.lua
-var responseFile string
-
 func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
-	result := includeTemplate
+	result := templateInclude
 	stringBuilder := strings.Builder{}
 	ingressRouteUrls := obj.GetIngressRouteUrls()
 	for _, url := range ingressRouteUrls {
 		path := url.Path
-		stringBuilder.WriteString(fmt.Sprintf(`"  ^/%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",`, path))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",%s`, path, "\n"))
 		for _, layer := range obj.Spec.Service.Layers {
 			if len(layer.Styles) > 0 {
-				stringBuilder.WriteString(fmt.Sprintf(`"  ^/%s/%s/legend.png" => "/images/%s",`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName()))
+				stringBuilder.WriteString(fmt.Sprintf(`  "^%s/%s/legend.png" => "/images/%s",%s`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName(), "\n"))
 			}
 		}
-		stringBuilder.WriteString(fmt.Sprintf(`  "^/%s/(.*)" => "/mapproxy/wmts/$1",`, path))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s/(.*)" => "/mapproxy/wmts/$1",%s`, path, "\n"))
 	}
-	stringBuilder.WriteString(`  "^/mapproxy/.*" => "/hide_direct_url"`)
+	stringBuilder.WriteString(`  "^/mapproxy/.*" => "/hide_direct_url"` + "\n")
 
 	rewriteRules := stringBuilder.String()
 	result = strings.ReplaceAll(result, "$REWRITERULES", rewriteRules)
@@ -39,7 +33,7 @@ func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
 }
 
 func GetResponse(_ *pdoknlv2.WMTS) (string, error) {
-	return responseFile, nil
+	return responseLua, nil
 }
 
 func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {

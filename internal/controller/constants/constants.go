@@ -14,5 +14,7 @@ const (
 	DataVolumeName = "data"
 
 	configSuffix                             = "-config"
-	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName + configSuffix
+	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName
+	LighttpdVolumeName                       = "lighttpd"
+	MapproxyVolumeName                       = "mapproxy"
 )

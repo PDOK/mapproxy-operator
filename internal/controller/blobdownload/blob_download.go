@@ -10,6 +10,7 @@ import (
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	"github.com/pdok/mapproxy-operator/internal/controller/utils"
+	"github.com/pkg/errors"
 
 	"k8s.io/utils/strings/slices"
 
@@ -61,6 +62,18 @@ func GetBlobDownloadInitContainer(obj *pdoknlv2.WMTS, images types.Images) (*cor
 	initContainer.Resources.Limits = corev1.ResourceList{
 		corev1.ResourceCPU: resourceCPU,
 	}
+
+	var envFromSource []corev1.EnvFromSource
+	for _, container := range obj.Spec.PodSpecPatch.InitContainers {
+		if container.Name == "blob-download" {
+			envFromSource = container.EnvFrom
+		}
+	}
+
+	if envFromSource == nil {
+		return nil, errors.New("could not find the envFrom for the init container 'blob-download'")
+	}
+	initContainer.EnvFrom = envFromSource
 
 	return &initContainer, nil
 }

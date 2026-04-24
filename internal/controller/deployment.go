@@ -5,6 +5,7 @@ import (
 	"github.com/pdok/mapproxy-operator/internal/controller/apacheexporter"
 	"github.com/pdok/mapproxy-operator/internal/controller/blobdownload"
 	"github.com/pdok/mapproxy-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapproxy-operator/internal/controller/constants"
 	"github.com/pdok/mapproxy-operator/internal/controller/kvptorestful"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapproxy"
@@ -16,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/yaml"
 )
 
 var storageClassName string //nolint:unused
@@ -43,6 +45,10 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	}
 
 	initContainers, err := getInitContainersForDeployment(r, obj)
+	b, _ := yaml.Marshal(initContainers)
+	println("Init containers:")
+	println(string(b))
+
 	if err != nil {
 		return err
 	}
@@ -56,6 +62,9 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	setTerminationMessage(containers)
 
 	volumes := getVolumes(obj, configMapNames)
+	b, _ = yaml.Marshal(volumes)
+	println("Volumes:")
+	println(string(b))
 
 	podTemplateSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
@@ -147,19 +156,19 @@ func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container
 	return containers, nil
 }
 
-func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
+func getVolumes(_ *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
 	return []corev1.Volume{
 		{
 			Name:         "data",
 			VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
 		}, {
-			Name:         "mapproxy",
+			Name:         constants.MapproxyVolumeName,
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
 		}, {
-			Name:         "lighttpd",
+			Name:         constants.LighttpdVolumeName,
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
 		}, {
-			Name:         "capabilities-generator",
+			Name:         constants.ConfigMapCapabilitiesGeneratorVolumeName,
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator}}},
 		},
 	}
@@ -243,13 +252,10 @@ func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) [
 
 func getPodAnnotations(deployment *appsv1.Deployment) map[string]string {
 	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
-	//nolint:gocritic
-	//annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
-	//annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
-	//annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
-	//annotations["prometheus.io/scrape"] = "true"
-	//annotations["prometheus.io/port"] = strconv.Itoa(int(constants.ApachePortNr))
-	//annotations["priority.version-checker.io/mapserver"] = "4"
-	//annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
+	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
+	annotations["priority.version-checker.io/mapproxy"] = "4"
+	annotations["priority.version-checker.io/wmts-kvp-to-restful"] = "4"
+	annotations["prometheus.io/port"] = "9117"
+	annotations["prometheus.io/scrape"] = "true"
 	return annotations
 }

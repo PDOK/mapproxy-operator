@@ -64,17 +64,22 @@ func getResources(obj *pdoknlv2.WMTS) corev1.ResourceRequirements {
 		cpuRequest = wmtsResources.Requests[corev1.ResourceCPU]
 	}
 
+	limits := corev1.ResourceList{
+		corev1.ResourceMemory: memoryLimit,
+	}
+
+	_, exists := wmtsResources.Limits[corev1.ResourceEphemeralStorage]
+	if exists {
+		limits[corev1.ResourceEphemeralStorage] = wmtsResources.Limits[corev1.ResourceEphemeralStorage]
+	}
+
+	requests := corev1.ResourceList{
+		corev1.ResourceCPU: cpuRequest,
+	}
+
 	return corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceMemory:  memoryLimit,
-			corev1.ResourceCPU:     wmtsResources.Limits[corev1.ResourceCPU],
-			corev1.ResourceStorage: wmtsResources.Limits[corev1.ResourceStorage],
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceMemory:  wmtsResources.Requests[corev1.ResourceMemory],
-			corev1.ResourceCPU:     cpuRequest,
-			corev1.ResourceStorage: wmtsResources.Requests[corev1.ResourceStorage],
-		},
+		Limits:   limits,
+		Requests: requests,
 	}
 }
 
