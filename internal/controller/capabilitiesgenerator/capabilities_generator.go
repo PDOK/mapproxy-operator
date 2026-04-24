@@ -24,7 +24,11 @@ func GetCapabilitiesGeneratorInitContainer(_ *pdoknlv2.WMTS, images types.Images
 			},
 		},
 		VolumeMounts: []corev1.VolumeMount{
-			utils.GetDataVolumeMount(),
+			{
+				Name:      "data",
+				MountPath: "/output",
+				ReadOnly:  false,
+			},
 			utils.GetConfigVolumeMount(constants.ConfigMapCapabilitiesGeneratorVolumeName),
 		},
 	}

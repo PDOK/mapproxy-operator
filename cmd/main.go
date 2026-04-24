@@ -140,7 +140,6 @@ func main() {
 	}
 
 	controller.SetUptimeOperatorAnnotations(setUptimeOperatorAnnotations)
-	controller.SetStorageClassName(storageClassName)
 
 	disableHTTP2 := func(c *tls.Config) {
 		setupLog.Info("Disabling HTTP/2")

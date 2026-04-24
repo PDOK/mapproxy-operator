@@ -20,12 +20,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var storageClassName string //nolint:unused
-
-func SetStorageClassName(name string) {
-	storageClassName = name
-}
-
 func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := r.Client
 	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
@@ -172,82 +166,6 @@ func getVolumes(_ *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []c
 			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator}}},
 		},
 	}
-	//nolint:gocritic
-	//baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
-	//if use, size := mapperutils.UseEphemeralVolume(obj); use {
-	//	baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
-	//		VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
-	//			Spec: corev1.PersistentVolumeClaimSpec{
-	//				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-	//				Resources: corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{
-	//					corev1.ResourceStorage: *size,
-	//				}},
-	//			},
-	//		},
-	//	}
-	//	if storageClassName != "" {
-	//		baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &storageClassName
-	//	}
-	//} else {
-	//	baseVolume.EmptyDir = &corev1.EmptyDirVolumeSource{}
-	//}
-	//
-	//volumes := []corev1.Volume{
-	//	baseVolume,
-	//	{Name: constants.DataVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-	//	getConfigMapVolume(constants.MapserverName, configMapNames.Mapserver),
-	//}
-	//
-	//if mapfile := obj.Mapfile(); mapfile != nil {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCustomMapfileVolumeName, mapfile.ConfigMapKeyRef.Name))
-	//}
-	//
-	//if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapOgcWebserviceProxyVolumeName, configMapNames.OgcWebserviceProxy))
-	//}
-	//
-	//if obj.Options().PrefetchData {
-	//	vol := getConfigMapVolume(constants.InitScriptsName, configMapNames.InitScripts)
-	//	vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
-	//	volumes = append(volumes, vol)
-	//}
-	//
-	//volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCapabilitiesGeneratorVolumeName, configMapNames.CapabilitiesGenerator))
-	//
-	//if obj.Mapfile() == nil {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapMapfileGeneratorVolumeName, configMapNames.MapfileGenerator))
-	//}
-	//
-	//if obj.Type() == pdoknlv3.ServiceTypeWMS {
-	//	if obj.Mapfile() == nil {
-	//		wms, _ := any(obj).(*pdoknlv3.WMS)
-	//		volumeProjections := []corev1.VolumeProjection{}
-	//		for _, cm := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
-	//			volumeProjections = append(volumeProjections, corev1.VolumeProjection{
-	//				ConfigMap: &corev1.ConfigMapProjection{LocalObjectReference: corev1.LocalObjectReference{Name: cm.Name}},
-	//			})
-	//		}
-	//
-	//		volumes = append(volumes, corev1.Volume{
-	//			Name:         constants.ConfigMapStylingFilesVolumeName,
-	//			VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: volumeProjections}},
-	//		})
-	//	} else {
-	//		// If there is a custom mapfile, we still want a styling-files volume, even if it is empty
-	//		volumes = append(volumes, corev1.Volume{
-	//			Name:         constants.ConfigMapStylingFilesVolumeName,
-	//			VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: []corev1.VolumeProjection{}}},
-	//		})
-	//	}
-	//
-	//	volumes = append(
-	//		volumes,
-	//		getConfigMapVolume(constants.ConfigMapFeatureinfoGeneratorVolumeName, configMapNames.FeatureInfoGenerator),
-	//		getConfigMapVolume(constants.ConfigMapLegendGeneratorVolumeName, configMapNames.LegendGenerator),
-	//	)
-	//}
-	//
-	//return volumes
 }
 
 func getPodAnnotations(deployment *appsv1.Deployment) map[string]string {

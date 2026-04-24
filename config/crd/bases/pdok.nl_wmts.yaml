@@ -869,7 +869,7 @@ spec:
                       properties:
                         crs:
                           description: The specified CRS
-                          pattern: ^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|WGS84$
+                          pattern: ^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)
                           type: string
                         zoomLevels:
                           items:

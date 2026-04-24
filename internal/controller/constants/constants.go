@@ -17,4 +17,6 @@ const (
 	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName
 	LighttpdVolumeName                       = "lighttpd"
 	MapproxyVolumeName                       = "mapproxy"
+
+	BlobsTilesBucket = "tiles"
 )

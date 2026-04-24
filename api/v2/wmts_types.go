@@ -155,10 +155,29 @@ type WMTSHealthCheck struct {
 // TileMatrixSet specifies the predefined tile matrices per CRS
 type TileMatrixSet struct {
 	// The specified CRS
-	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|WGS84$"
+	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)"
 	CRS string `json:"crs"`
 	// +kubebuilder:validation:items:Pattern:="^[0-9]{1,2}(-[0-9]{1,2})?$"
 	ZoomLevels []string `json:"zoomLevels,omitempty"`
+}
+
+func (t *TileMatrixSet) GetMinZoomLevel() *int {
+	if len(t.ZoomLevels) == 0 {
+		return nil
+	}
+
+	result := 99
+	for _, zoomLevel := range t.ZoomLevels {
+		split := strings.Split(zoomLevel, "-")
+		if len(split) == 2 {
+			minVal, _ := strconv.Atoi(split[0])
+			result = min(result, minVal)
+		} else {
+			minVal, _ := strconv.Atoi(split[0])
+			result = min(result, minVal)
+		}
+	}
+	return &result
 }
 
 // Used for generation of capabilities

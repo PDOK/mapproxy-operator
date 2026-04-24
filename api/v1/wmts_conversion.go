@@ -59,7 +59,7 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 				Cache: v2.WMTSCache{
 					MetaSize: metaSize,
 					Azure: v2.AzureCache{
-						Container:  "public",
+						Container:  "tiles",
 						BlobPrefix: src.Spec.Service.BlobPath,
 					},
 				},

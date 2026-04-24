@@ -3,12 +3,15 @@ package mapproxy
 import (
 	_ "embed"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
-	"sigs.k8s.io/yaml"
+	"github.com/pdok/mapproxy-operator/internal/controller/constants"
+	"gopkg.in/yaml.v3"
+	"k8s.io/utils/ptr"
 )
 
 func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
@@ -45,10 +48,10 @@ func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {
 				FeatureinfoFormats: nil,
 			},
 		},
-		Layers:  make([]Layer, 0),
-		Caches:  make(map[string]Cache),
-		Sources: make(map[string]Source),
-		Grids:   make(map[string]Grid),
+		Layers:  getMapproxyLayers(obj),
+		Caches:  getMapproxyCaches(obj),
+		Sources: getMapproxySources(obj),
+		Grids:   getMapproxyGrids(obj),
 		Globals: getMapproxyGlobals(obj),
 	}
 
@@ -99,6 +102,203 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 	elem2, _ := strconv.Atoi(splitMetaSize[1][0 : len(splitMetaSize[1])-1])
 	result.Cache.MetaSize = []int{elem1, elem2}
 
+	return result
+}
+
+func getMapproxyLayers(obj *pdoknlv2.WMTS) []Layer {
+	result := make([]Layer, 0)
+	for _, wmtsLayer := range obj.Spec.Service.Layers {
+		myLayer := Layer{
+			Name:        wmtsLayer.Identifier,
+			Title:       wmtsLayer.Title,
+			TileSources: make([]string, 0),
+		}
+		for _, tms := range obj.Spec.Service.TileMatrixSets {
+			myLayer.TileSources = append(myLayer.TileSources, fmt.Sprintf("%s-%s-cache", wmtsLayer.Identifier, tms.CRS[5:]))
+		}
+		result = append(result, myLayer)
+	}
+	return result
+}
+
+func getMapproxyCaches(obj *pdoknlv2.WMTS) map[string]Cache {
+	result := make(map[string]Cache)
+	for _, wmtsLayer := range obj.Spec.Service.Layers {
+		for _, tms := range obj.Spec.Service.TileMatrixSets {
+			layerSrsName := getLayerSrsName(wmtsLayer, tms)
+			cacheName := layerSrsName + "-cache"
+			cache := Cache{
+				Sources:        []string{layerSrsName + "-source"},
+				Grids:          []string{tms.CRS},
+				DisableStorage: !obj.Spec.Options.Cached,
+			}
+			if obj.Spec.Options.GetFeatureInfo {
+				cache.Sources = append(cache.Sources, layerSrsName+"-source-featureinfo")
+			}
+
+			if obj.Spec.Options.Cached {
+				cache.CacheDetails = &CacheDetails{
+					Type:          "azureblob",
+					Directory:     fmt.Sprintf("%s/%s/%s/", obj.Spec.Service.Cache.Azure.BlobPrefix, wmtsLayer.Identifier, tms.CRS[5:]),
+					ContainerName: constants.BlobsTilesBucket,
+				}
+			}
+
+			result[cacheName] = cache
+		}
+
+	}
+	return result
+}
+
+func getLayerSrsName(wmtsLayer pdoknlv2.WMTSLayer, tileMatrixSet pdoknlv2.TileMatrixSet) string {
+	return fmt.Sprintf("%s-%s", wmtsLayer.Identifier, tileMatrixSet.CRS[5:])
+}
+
+func getMapproxySources(obj *pdoknlv2.WMTS) map[string]Source {
+	result := make(map[string]Source)
+	addSourcesWithParams(obj, result, "", true, false)
+	if obj.Spec.Options.GetFeatureInfo {
+		addSourcesWithParams(obj, result, "-featureinfo", false, true)
+	}
+
+	return result
+}
+
+func addSourcesWithParams(obj *pdoknlv2.WMTS, sources map[string]Source, suffix string, isMap bool, featureInfo bool) {
+	for _, wmtsLayer := range obj.Spec.Service.Layers {
+		for _, tms := range obj.Spec.Service.TileMatrixSets {
+			layerSrsName := getLayerSrsName(wmtsLayer, tms)
+			sourceName := fmt.Sprintf("%s-source%s", layerSrsName, suffix)
+			url := ""
+			if isMap {
+				url = wmtsLayer.Source.Wms.URL.String()
+			} else {
+				url = wmtsLayer.Source.Wms.URL.String() + "&feature_count=5"
+			}
+
+			var styles *string
+			if !featureInfo && len(wmtsLayer.Source.Wms.Layers) > 0 {
+				styles = ptr.To(strings.Join(wmtsLayer.Source.Wms.Layers, ","))
+			}
+
+			source := Source{
+				Type: "wms",
+				WMSOpts: SourceWMSOpts{
+					Map:         isMap,
+					Featureinfo: featureInfo,
+					Version:     "1.3.0",
+				},
+				SupportedSrs: []string{tms.CRS},
+				Coverage:     SourceCoverage{},
+				MinRes:       getMinRes(tms),
+				MaxRes:       getMaxRes(tms),
+				Req: SourceReq{
+					Layers:      strings.Join(wmtsLayer.Source.Wms.Layers, ","),
+					Url:         url,
+					Styles:      styles,
+					Transparent: wmtsLayer.Source.Wms.Transparent == nil || *wmtsLayer.Source.Wms.Transparent,
+				},
+			}
+			if tms.CRS == "EPSG:25831" {
+				source.Coverage = SourceCoverage{
+					Srs:  "EPSG:25831",
+					Bbox: []float64{392962.82637282484, 5520233.281369477, 869237.0659525886, 6212112.288607274},
+				}
+			} else if tms.CRS == "EPSG:3857" {
+				source.Coverage = SourceCoverage{
+					Srs:  "EPSG:3857",
+					Bbox: []float64{143380.08950252648, 6416635.003174079, 951740.3437830413, 7544320.730706658},
+				}
+			} else {
+				source.Coverage = SourceCoverage{
+					Srs:  "EPSG:28992",
+					Bbox: []float64{-101552, 210360, 352820, 887600},
+				}
+			}
+
+			sources[sourceName] = source
+		}
+	}
+}
+
+func getMinRes(tileMatrixSet pdoknlv2.TileMatrixSet) *float64 {
+	minZoomLevel := tileMatrixSet.GetMinZoomLevel()
+	if minZoomLevel == nil {
+		return nil
+	}
+	if tileMatrixSet.CRS == "EPSG:28992" {
+		divisor := math.Pow(2.0, float64(*minZoomLevel))
+		return ptr.To(3440.64 / divisor)
+	} else if tileMatrixSet.CRS == "EPSG:3857" {
+		divisor := math.Pow(559082264.029*0.00028, float64(*minZoomLevel))
+		return ptr.To(3440.64 / divisor)
+	} else if tileMatrixSet.CRS == "EPSG:25831" {
+		presetList := []float64{10000000, 5000000, 2500000, 1000000, 500000, 250000, 100000, 75000, 50000, 25000, 10000, 5000, 2500, 1000, 500, 250, 100}
+		return ptr.To(presetList[*minZoomLevel] * 0.00028)
+	}
+
+	return nil
+}
+
+func getMaxRes(tileMatrixSet pdoknlv2.TileMatrixSet) *float64 {
+	maxZoomLevel := tileMatrixSet.GetMaxZoomLevel()
+	if maxZoomLevel == nil {
+		return nil
+	}
+	if tileMatrixSet.CRS == "EPSG:28992" {
+		divisor := math.Pow(2.0, float64(*maxZoomLevel))
+		return ptr.To(3440.64 / divisor)
+	} else if tileMatrixSet.CRS == "EPSG:3857" {
+		divisor := math.Pow(559082264.029*0.00028, float64(*maxZoomLevel))
+		return ptr.To(3440.64 / divisor)
+	} else if tileMatrixSet.CRS == "EPSG:25831" {
+		presetList := []float64{10000000, 5000000, 2500000, 1000000, 500000, 250000, 100000, 75000, 50000, 25000, 10000, 5000, 2500, 1000, 500, 250, 100}
+		return ptr.To(presetList[*maxZoomLevel] * 0.00028 * 0.5)
+	}
+
+	return nil
+}
+
+func getMapproxyGrids(obj *pdoknlv2.WMTS) map[string]Grid {
+	result := make(map[string]Grid)
+	for _, tms := range obj.Spec.Service.TileMatrixSets {
+		if tms.CRS == "EPSG:28992" {
+			grid := Grid{
+				TileSize: []float64{256, 256},
+				Origin:   "nw",
+				Srs:      "EPSG:28992",
+				Bbox:     []float64{-285401.920, 22598.080, 595401.920, 903401.920},
+				BboxSrs:  "EPSG:28992",
+				Res:      []float64{},
+			}
+			i := 0
+			for i < 17 {
+				grid.Res = append(grid.Res, 3440.64/math.Pow(2.0, float64(i)))
+				i += 1
+			}
+
+			result["EPSG:28992"] = grid
+		} else if tms.CRS == "EPSG:25831" {
+			grid := Grid{
+				TileSize: nil,
+				Origin:   "",
+				Srs:      "",
+				Bbox:     nil,
+				Res:      nil,
+			}
+			result["EPSG:25831"] = grid
+		} else if tms.CRS == "EPSG:3857" {
+			grid := Grid{
+				TileSize: nil,
+				Origin:   "",
+				Srs:      "",
+				Bbox:     nil,
+				Res:      nil,
+			}
+			result["EPSG:3857"] = grid
+		}
+	}
 	return result
 }
 
@@ -161,18 +361,25 @@ type Png24 struct {
 }
 
 type Cache struct {
-	Sources        []string `yaml:"sources"`
-	Grids          []string `yaml:"grids"`
-	DisableStorage bool     `yaml:"disable_storage"`
+	Sources        []string      `yaml:"sources"`
+	Grids          []string      `yaml:"grids"`
+	DisableStorage bool          `yaml:"disable_storage"`
+	CacheDetails   *CacheDetails `yaml:"cache,omitempty"`
+}
+
+type CacheDetails struct {
+	Type          string `yaml:"type"`
+	Directory     string `yaml:"directory"`
+	ContainerName string `yaml:"containerName"`
 }
 
 type Source struct {
 	Type         string         `yaml:"type"`
-	WMSOpts      string         `yaml:"wms_opts"`
+	WMSOpts      SourceWMSOpts  `yaml:"wms_opts"`
 	SupportedSrs []string       `yaml:"supported_srs"`
 	Coverage     SourceCoverage `yaml:"coverage"`
-	MinRes       float64        `yaml:"min_res"`
-	MaxRes       float64        `yaml:"max_res"`
+	MinRes       *float64       `yaml:"min_res,omitempty"`
+	MaxRes       *float64       `yaml:"max_res,omitempty"`
 	Req          SourceReq      `yaml:"req"`
 }
 
@@ -188,10 +395,10 @@ type SourceCoverage struct {
 }
 
 type SourceReq struct {
-	Layers      string `yaml:"layers"`
-	Url         string `yaml:"url"`
-	Styles      string `yaml:"styles"`
-	Transparent bool   `yaml:"transparent"`
+	Layers      string  `yaml:"layers"`
+	Url         string  `yaml:"url"`
+	Styles      *string `yaml:"styles,omitempty"`
+	Transparent bool    `yaml:"transparent"`
 }
 
 type Grid struct {
@@ -199,5 +406,6 @@ type Grid struct {
 	Origin   string    `yaml:"origin"`
 	Srs      string    `yaml:"srs"`
 	Bbox     []float64 `yaml:"bbox"`
+	BboxSrs  string    `yaml:"bbox_srs"`
 	Res      []float64 `yaml:"res"`
 }
