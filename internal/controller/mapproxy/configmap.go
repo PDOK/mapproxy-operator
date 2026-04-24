@@ -3,9 +3,12 @@ package mapproxy
 import (
 	_ "embed"
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
+	"sigs.k8s.io/yaml"
 )
 
 //go:embed template_include.conf
@@ -35,12 +38,74 @@ func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
 	return result, nil
 }
 
-func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {
-	return "", nil
+func GetResponse(_ *pdoknlv2.WMTS) (string, error) {
+	return responseFile, nil
 }
 
-func GetResponse(obj *pdoknlv2.WMTS) (string, error) {
-	return responseFile, nil
+func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {
+	mapproxyConfig := MapproxyConfig{
+		Services: Services{
+			Wmts: ServiceWMTS{
+				Kvp:                true,
+				Restful:            true,
+				FeatureinfoFormats: nil,
+			},
+		},
+		Layers:  make([]Layer, 0),
+		Caches:  make(map[string]Cache),
+		Sources: make(map[string]Source),
+		Grids:   make(map[string]Grid),
+		Globals: getMapproxyGlobals(obj),
+	}
+
+	bytes, err := yaml.Marshal(mapproxyConfig)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
+	result := Globals{
+		Cache: GlobalsCache{
+			MetaBuffer: 360,
+		},
+		Image: GlobalsImage{
+			ResamplingMethod: "bilinear",
+			Paletted:         false,
+			Formats: GlobalsImageFormats{
+				Png24: Png24{
+					Format:      "image/png",
+					Transparent: true,
+				},
+			},
+		},
+	}
+
+	metaSize := ""
+	if obj.Spec.Options.Cached {
+		metaSize = "[2,2]"
+		if obj.Spec.Service.Cache.MetaSize != "" {
+			metaSize = obj.Spec.Service.Cache.MetaSize
+		}
+
+		result.Cache.BaseDir = to.Ptr("/srv/mapproxy/cache_data")
+		result.Cache.LockDir = to.Ptr("/srv/mapproxy/cache_data/locks")
+		result.Cache.TileLockDir = to.Ptr("/srv/mapproxy/cache_data/tile_locks")
+	} else {
+		metaSize = "[1,1]"
+		if obj.Spec.Service.Cache.MetaSize != "" {
+			metaSize = obj.Spec.Service.Cache.MetaSize
+		}
+	}
+
+	// string to separate ints
+	splitMetaSize := strings.Split(metaSize, ",")
+	elem1, _ := strconv.Atoi(splitMetaSize[0][1:])
+	elem2, _ := strconv.Atoi(splitMetaSize[1][0 : len(splitMetaSize[1])-1])
+	result.Cache.MetaSize = []int{elem1, elem2}
+
+	return result
 }
 
 type MapproxyConfig struct {
@@ -79,8 +144,11 @@ type Globals struct {
 }
 
 type GlobalsCache struct {
-	MetaBuffer int   `yaml:"meta_buffer"`
-	MetaSize   []int `yaml:"meta_size"`
+	MetaBuffer  int     `yaml:"meta_buffer"`
+	BaseDir     *string `yaml:"base_dir,omitempty"`
+	LockDir     *string `yaml:"lock_dir,omitempty"`
+	TileLockDir *string `yaml:"tile_lock_dir,omitempty"`
+	MetaSize    []int   `yaml:"meta_size"`
 }
 
 type GlobalsImage struct {
