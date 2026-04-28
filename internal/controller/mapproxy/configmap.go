@@ -3,6 +3,7 @@ package mapproxy
 import (
 	"fmt"
 	"math"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -38,8 +39,8 @@ func GetResponse(_ *pdoknlv2.WMTS) (string, error) {
 	return responseLua, nil
 }
 
-func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {
-	mapproxyConfig := MapproxyConfig{
+func GetMapproxyConfig(obj *pdoknlv2.WMTS) (MapproxyConfig, error) {
+	return MapproxyConfig{
 		Services: Services{
 			Wmts: ServiceWMTS{
 				Kvp:                true,
@@ -52,6 +53,13 @@ func GetMapproxyConfig(obj *pdoknlv2.WMTS) (string, error) {
 		Sources: getMapproxySources(obj),
 		Grids:   getMapproxyGrids(obj),
 		Globals: getMapproxyGlobals(obj),
+	}, nil
+}
+
+func GetMapproxyConfigString(obj *pdoknlv2.WMTS) (string, error) {
+	mapproxyConfig, err := GetMapproxyConfig(obj)
+	if err != nil {
+		return "", err
 	}
 
 	bytes, err := yaml.Marshal(mapproxyConfig)
@@ -177,8 +185,8 @@ func addSourcesWithParams(obj *pdoknlv2.WMTS, sources map[string]Source, suffix 
 			}
 
 			var styles *string
-			if !featureInfo && len(wmtsLayer.Source.Wms.Layers) > 0 {
-				styles = ptr.To(strings.Join(wmtsLayer.Source.Wms.Layers, ","))
+			if !featureInfo && len(wmtsLayer.Source.Wms.Styles) > 0 {
+				styles = ptr.To(strings.Join(wmtsLayer.Source.Wms.Styles, ","))
 			}
 
 			source := Source{
@@ -232,8 +240,8 @@ func getMinRes(tileMatrixSet pdoknlv2.TileMatrixSet) *float64 {
 		divisor := math.Pow(2.0, float64(*minZoomLevel))
 		return ptr.To(3440.64 / divisor)
 	case "EPSG:3857": //nolint:goconst
-		divisor := math.Pow(559082264.029*0.00028, float64(*minZoomLevel))
-		return ptr.To(3440.64 / divisor)
+		divisor := math.Pow(2.0, float64(*minZoomLevel))
+		return ptr.To(559082264.029 * 0.00028 / divisor)
 	case "EPSG:25831": //nolint:goconst
 		presetList := []float64{10000000, 5000000, 2500000, 1000000, 500000, 250000, 100000, 75000, 50000, 25000, 10000, 5000, 2500, 1000, 500, 250, 100}
 		return ptr.To(presetList[*minZoomLevel] * 0.00028)
@@ -249,11 +257,11 @@ func getMaxRes(tileMatrixSet pdoknlv2.TileMatrixSet) *float64 {
 	}
 	switch tileMatrixSet.CRS {
 	case "EPSG:28992":
-		divisor := math.Pow(2.0, float64(*maxZoomLevel))
+		divisor := math.Pow(2.0, float64(*maxZoomLevel+1))
 		return ptr.To(3440.64 / divisor)
 	case "EPSG:3857":
-		divisor := math.Pow(559082264.029*0.00028, float64(*maxZoomLevel))
-		return ptr.To(3440.64 / divisor)
+		divisor := math.Pow(2.0, float64(*maxZoomLevel+1))
+		return ptr.To(559082264.029 * 0.00028 / divisor)
 	case "EPSG:25831":
 		presetList := []float64{10000000, 5000000, 2500000, 1000000, 500000, 250000, 100000, 75000, 50000, 25000, 10000, 5000, 2500, 1000, 500, 250, 100}
 		return ptr.To(presetList[*maxZoomLevel] * 0.00028 * 0.5)
@@ -284,20 +292,22 @@ func getMapproxyGrids(obj *pdoknlv2.WMTS) map[string]Grid {
 			result["EPSG:28992"] = grid
 		case "EPSG:25831":
 			grid := Grid{
-				TileSize: nil,
-				Origin:   "",
-				Srs:      "",
-				Bbox:     nil,
-				Res:      nil,
+				TileSize: []float64{256, 256},
+				Origin:   "nw",
+				Srs:      "EPSG:25831",
+				BboxSrs:  "EPSG:25831",
+				Bbox:     []float64{-2404683.40738879, 3997657.58466454, 4046516.592611209, 8298457.5846645385},
+				Res:      []float64{2799.9999999999995, 1399.9999999999998, 699.9999999999999, 280.00, 140.00, 70.00, 27.999999999999996, 20.999999999999996, 13.999999999999998, 6.999999999999999, 2.80, 1.40, 0.7, 0.28, 0.14, 0.07, 0.028},
 			}
 			result["EPSG:25831"] = grid
 		case "EPSG:3857":
 			grid := Grid{
-				TileSize: nil,
-				Origin:   "",
-				Srs:      "",
-				Bbox:     nil,
-				Res:      nil,
+				TileSize: []float64{256, 256},
+				Origin:   "nw",
+				Srs:      "EPSG:3857",
+				BboxSrs:  "EPSG:3857",
+				Bbox:     []float64{-20037508.3427892, -20037508.3427892, 20037508.3427892, 20037508.3427892},
+				Res:      []float64{156543.033928041, 78271.5169640204, 39135.7584820102, 19567.8792410051, 9783.93962050256, 4891.96981025128, 2445.98490512564, 1222.99245256282, 611.49622628141, 305.748113140704, 152.874056570352, 76.4370282851762, 38.2185141425881, 19.109257071294, 9.55462853564703, 4.77731426782351, 2.38865713391175, 1.19432856695587, 0.597164283477939, 0.29858214173897, 0.149291070869485, 0.0746455354347424, 0.0373227677173712, 0.0186613838586856, 0.0093306919293428},
 			}
 			result["EPSG:3857"] = grid
 		}
@@ -312,6 +322,37 @@ type MapproxyConfig struct { //nolint:revive
 	Sources  map[string]Source `yaml:"sources"`
 	Grids    map[string]Grid   `yaml:"grids"`
 	Globals  Globals           `yaml:"globals"`
+}
+
+func (m *MapproxyConfig) Equal(o *MapproxyConfig) bool {
+	if !reflect.DeepEqual(m.Services, o.Services) {
+		return false
+	}
+
+	if !reflect.DeepEqual(m.Layers, o.Layers) {
+		return false
+	}
+
+	if !reflect.DeepEqual(m.Caches, o.Caches) {
+		return false
+	}
+
+	for key, value := range m.Sources {
+		other := o.Sources[key]
+		if !value.Equal(&other) {
+			return false
+		}
+	}
+
+	if !reflect.DeepEqual(m.Grids, o.Grids) {
+		return false
+	}
+
+	if !reflect.DeepEqual(m.Globals, o.Globals) {
+		return false
+	}
+
+	return true
 }
 
 type Services struct {
@@ -384,6 +425,38 @@ type Source struct {
 	MinRes       *float64       `yaml:"min_res,omitempty"`
 	MaxRes       *float64       `yaml:"max_res,omitempty"`
 	Req          SourceReq      `yaml:"req"`
+}
+
+func (s *Source) Equal(o *Source) bool {
+	if s.Type != o.Type {
+		return false
+	}
+
+	if !reflect.DeepEqual(s.WMSOpts, o.WMSOpts) {
+		return false
+	}
+
+	if !reflect.DeepEqual(s.SupportedSrs, o.SupportedSrs) {
+		return false
+	}
+
+	if !reflect.DeepEqual(s.Coverage, o.Coverage) {
+		return false
+	}
+
+	if math.Abs(*s.MinRes-*o.MinRes) > 1e-8 {
+		return false
+	}
+
+	if math.Abs(*s.MaxRes-*o.MaxRes) > 1e-8 {
+		return false
+	}
+
+	if !reflect.DeepEqual(s.Req, o.Req) {
+		return false
+	}
+
+	return true
 }
 
 type SourceWMSOpts struct {

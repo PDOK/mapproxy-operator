@@ -60,7 +60,7 @@ func mutateConfigMapMapProxy(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *c
 			return err
 		}
 		configMap.Data[mapproxyIncludeFileName] = includeConfig
-		mapproxyConfig, err := mapproxy.GetMapproxyConfig(obj)
+		mapproxyConfig, err := mapproxy.GetMapproxyConfigString(obj)
 		if err != nil {
 			return err
 		}
