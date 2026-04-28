@@ -17,7 +17,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/yaml"
 )
 
 func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
@@ -39,9 +38,6 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	}
 
 	initContainers, err := getInitContainersForDeployment(r, obj)
-	b, _ := yaml.Marshal(initContainers)
-	println("Init containers:")
-	println(string(b))
 
 	if err != nil {
 		return err
@@ -56,9 +52,6 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	setTerminationMessage(containers)
 
 	volumes := getVolumes(obj, configMapNames)
-	b, _ = yaml.Marshal(volumes)
-	println("Volumes:")
-	println(string(b))
 
 	podTemplateSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{

@@ -7,7 +7,7 @@ import (
 	"github.com/pdok/mapproxy-operator/internal/controller/constants"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	"github.com/pdok/mapproxy-operator/internal/controller/utils"
-	"sigs.k8s.io/yaml"
+	"gopkg.in/yaml.v3"
 
 	corev1 "k8s.io/api/core/v1"
 )
