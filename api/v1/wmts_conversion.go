@@ -59,7 +59,7 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 				Cache: v2.WMTSCache{
 					MetaSize: metaSize,
 					Azure: v2.AzureCache{
-						Container:  "public",
+						Container:  "tiles",
 						BlobPrefix: src.Spec.Service.BlobPath,
 					},
 				},
@@ -89,17 +89,20 @@ func getPodSpecPatch() corev1.PodSpec {
 	return corev1.PodSpec{
 		InitContainers: []corev1.Container{{
 			Name: "blob-download",
-			EnvFrom: []corev1.EnvFromSource{{
-				Prefix: "",
-				ConfigMapRef: &corev1.ConfigMapEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: secretRef},
-					Optional:             nil,
+			EnvFrom: []corev1.EnvFromSource{
+				{
+					ConfigMapRef: &corev1.ConfigMapEnvSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: secretRef},
+						Optional:             nil,
+					},
 				},
-				SecretRef: &corev1.SecretEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference{Name: secretRef},
-					Optional:             nil,
+				{
+					SecretRef: &corev1.SecretEnvSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: secretRef},
+						Optional:             nil,
+					},
 				},
-			}},
+			},
 		}},
 		Containers: []corev1.Container{{
 			Name: "mapproxy",
@@ -113,7 +116,7 @@ func getPodSpecPatch() corev1.PodSpec {
 					},
 				},
 			}},
-			Resources: corev1.ResourceRequirements{Limits: corev1.ResourceList{corev1.ResourceStorage: resource.MustParse("21Mi")}},
+			Resources: corev1.ResourceRequirements{Limits: corev1.ResourceList{corev1.ResourceEphemeralStorage: resource.MustParse("21Mi")}},
 		}},
 	}
 }

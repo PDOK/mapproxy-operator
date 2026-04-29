@@ -209,13 +209,15 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	return operationResults, nil
 }
 
-func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) { //nolint:revive,unparam
+func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) { //nolint:revive
 	operationResults, configMaps := make(map[string]controllerutil.OperationResult), make(map[string]func(*WMTSReconciler, *pdoknlv2.WMTS, *corev1.ConfigMap) error)
-	//nolint:gocritic
-	//configMaps[constants.MapserverName] = mutateConfigMap
-	//configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
-	//	return mutateConfigMapCapabilitiesGenerator(r, o, cm)
-	//}
+	configMaps[constants.CapabilitiesGeneratorName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error { //nolint:gocritic
+		return mutateConfigMapCapabilitiesGenerator(r, o, cm)
+	}
+
+	configMaps[constants.MapproxyName] = func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error { //nolint:gocritic
+		return mutateConfigMapMapProxy(r, o, cm)
+	}
 
 	for cmName, mutate := range configMaps {
 		cm, or, err := createOrUpdateConfigMap(ctx, r, obj, cmName, func(r *WMTSReconciler, o *pdoknlv2.WMTS, cm *corev1.ConfigMap) error {
@@ -227,22 +229,11 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 		if err != nil {
 			return hashedConfigMapNames, operationResults, err
 		}
-		switch cmName { //nolint:revive
-		//nolint:gocritic
-		//case constants.MapserverName: //nolint:gocritic
-		//	hashedConfigMapNames.Mapserver = cm.Name
-		//case constants.MapfileGeneratorName:
-		//	hashedConfigMapNames.MapfileGenerator = cm.Name
-		//case constants.CapabilitiesGeneratorName:
-		//	hashedConfigMapNames.CapabilitiesGenerator = cm.Name
-		//case constants.InitScriptsName:
-		//	hashedConfigMapNames.InitScripts = cm.Name
-		//case constants.LegendGeneratorName:
-		//	hashedConfigMapNames.LegendGenerator = cm.Name
-		//case constants.FeatureinfoGeneratorName:
-		//	hashedConfigMapNames.FeatureInfoGenerator = cm.Name
-		//case constants.OgcWebserviceProxyName:
-		//	hashedConfigMapNames.OgcWebserviceProxy = cm.Name
+		switch cmName {
+		case constants.CapabilitiesGeneratorName:
+			hashedConfigMapNames.CapabilitiesGenerator = cm.Name
+		case constants.MapproxyName:
+			hashedConfigMapNames.Mapproxy = cm.Name
 		}
 	}
 

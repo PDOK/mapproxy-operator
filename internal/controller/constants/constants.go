@@ -9,4 +9,14 @@ const (
 
 	MapserverPortNr int32 = 80
 	ApachePortNr    int32 = 9117
+
+	BaseVolumeName = "base"
+	DataVolumeName = "data"
+
+	configSuffix                             = "-config"
+	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName
+	LighttpdVolumeName                       = "lighttpd"
+	MapproxyVolumeName                       = "mapproxy"
+
+	BlobsTilesBucket = "tiles"
 )

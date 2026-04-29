@@ -1,12 +1,14 @@
 package v2
 
 import (
+	"strconv"
 	"strings"
 
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/strings/slices"
 )
 
 func init() {
@@ -46,6 +48,29 @@ func (w *WMTS) TypedName() string {
 	}
 
 	return name + "-" + typeSuffix
+}
+
+func (w *WMTS) GetWmsUrls() []string {
+	result := []string{}
+	for _, layer := range w.Spec.Service.Layers {
+		wmsURLString := layer.Source.Wms.URL.String()
+		if !slices.Contains(result, wmsURLString) {
+			result = append(result, wmsURLString)
+		}
+	}
+	return result
+}
+
+func (w *WMTS) GetIngressRouteUrls() []smoothoperatormodel.URL {
+	if len(w.Spec.IngressRouteURLs) == 0 {
+		return []smoothoperatormodel.URL{w.Spec.Service.BaseURL}
+	}
+
+	result := []smoothoperatormodel.URL{}
+	for _, ingressRoute := range w.Spec.IngressRouteURLs {
+		result = append(result, ingressRoute.URL)
+	}
+	return result
 }
 
 // +kubebuilder:object:root=true
@@ -130,10 +155,44 @@ type WMTSHealthCheck struct {
 // TileMatrixSet specifies the predefined tile matrices per CRS
 type TileMatrixSet struct {
 	// The specified CRS
-	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)|WGS84$"
+	// +kubebuilder:validation:Pattern:="^EPSG:(28992|25831|25832|3034|3035|3857|4258|4326)"
 	CRS string `json:"crs"`
 	// +kubebuilder:validation:items:Pattern:="^[0-9]{1,2}(-[0-9]{1,2})?$"
 	ZoomLevels []string `json:"zoomLevels,omitempty"`
+}
+
+func (t *TileMatrixSet) GetMinZoomLevel() *int {
+	if len(t.ZoomLevels) == 0 {
+		return nil
+	}
+
+	result := 99
+	for _, zoomLevel := range t.ZoomLevels {
+		split := strings.Split(zoomLevel, "-")
+		minVal, _ := strconv.Atoi(split[0])
+		result = min(result, minVal)
+	}
+	return &result
+}
+
+// Used for generation of capabilities
+func (t *TileMatrixSet) GetMaxZoomLevel() *int {
+	if len(t.ZoomLevels) == 0 {
+		return nil
+	}
+
+	result := 0
+	for _, zoomLevel := range t.ZoomLevels {
+		split := strings.Split(zoomLevel, "-")
+		if len(split) == 2 {
+			maxVal, _ := strconv.Atoi(split[1])
+			result = max(result, maxVal)
+		} else {
+			maxVal, _ := strconv.Atoi(split[0])
+			result = max(result, maxVal)
+		}
+	}
+	return &result
 }
 
 // WMTSLayer describes the layer provided to the service consumer
@@ -167,6 +226,11 @@ type StyleLegend struct {
 	// Blob key location of the style
 	// +kubebuilder:validation:MinLength:=1
 	BlobKey string `json:"blobKey"`
+}
+
+func (s *StyleLegend) GetBlobKeyName() string {
+	lastIndex := strings.LastIndex(s.BlobKey, "/")
+	return s.BlobKey[lastIndex+1 : len(s.BlobKey)]
 }
 
 type WMTSLayerSource struct {

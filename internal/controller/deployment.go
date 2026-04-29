@@ -2,7 +2,13 @@ package controller
 
 import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
+	"github.com/pdok/mapproxy-operator/internal/controller/apacheexporter"
+	"github.com/pdok/mapproxy-operator/internal/controller/blobdownload"
+	"github.com/pdok/mapproxy-operator/internal/controller/capabilitiesgenerator"
+	"github.com/pdok/mapproxy-operator/internal/controller/constants"
+	"github.com/pdok/mapproxy-operator/internal/controller/kvptorestful"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
+	"github.com/pdok/mapproxy-operator/internal/controller/mapproxy"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,12 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-var storageClassName string //nolint:unused
-
-func SetStorageClassName(name string) {
-	storageClassName = name
-}
 
 func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := r.Client
@@ -37,7 +37,8 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 		},
 	}
 
-	initContainers, err := getInitContainerForDeployment(r, obj)
+	initContainers, err := getInitContainersForDeployment(r, obj)
+
 	if err != nil {
 		return err
 	}
@@ -94,21 +95,21 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	return ctrl.SetControllerReference(obj, deployment, r.Scheme)
 }
 
-func getInitContainerForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) { //nolint:revive
-	//nolint:gocritic
-	//images := r.Images
-	//blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, *images)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(obj, *images)
-	//if err != nil {
-	//	return nil, err
-	//}
+func getInitContainersForDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS) ([]corev1.Container, error) { //nolint:revive
+	result := []corev1.Container{}
+	images := r.Images
+	blobDownloadInitContainer, err := blobdownload.GetBlobDownloadInitContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, *blobDownloadInitContainer)
+	capabilitiesGeneratorInitContainer, err := capabilitiesgenerator.GetCapabilitiesGeneratorInitContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	result = append(result, *capabilitiesGeneratorInitContainer)
 
-	initContainers := []corev1.Container{}
-
-	return initContainers, nil
+	return result, nil
 }
 
 func setTerminationMessage(c []corev1.Container) {
@@ -120,98 +121,52 @@ func setTerminationMessage(c []corev1.Container) {
 
 func getContainers(obj *pdoknlv2.WMTS, images *types.Images) ([]corev1.Container, error) { //nolint:revive
 	containers := []corev1.Container{}
+
+	kvpToRestfulContainer, err := kvptorestful.GetKvpToRestfulContainer(images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *kvpToRestfulContainer)
+
+	mapproxyContainer, err := mapproxy.GetMapproxyContainer(obj, images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *mapproxyContainer)
+
+	apacheContainer, err := apacheexporter.GetApacheContainer(images)
+	if err != nil {
+		return nil, err
+	}
+	containers = append(containers, *apacheContainer)
+
 	return containers, nil
 }
 
-func getVolumes(obj *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
-	return []corev1.Volume{}
-	//nolint:gocritic
-	//baseVolume := corev1.Volume{Name: constants.BaseVolumeName}
-	//if use, size := mapperutils.UseEphemeralVolume(obj); use {
-	//	baseVolume.Ephemeral = &corev1.EphemeralVolumeSource{
-	//		VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
-	//			Spec: corev1.PersistentVolumeClaimSpec{
-	//				AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-	//				Resources: corev1.VolumeResourceRequirements{Requests: corev1.ResourceList{
-	//					corev1.ResourceStorage: *size,
-	//				}},
-	//			},
-	//		},
-	//	}
-	//	if storageClassName != "" {
-	//		baseVolume.Ephemeral.VolumeClaimTemplate.Spec.StorageClassName = &storageClassName
-	//	}
-	//} else {
-	//	baseVolume.EmptyDir = &corev1.EmptyDirVolumeSource{}
-	//}
-	//
-	//volumes := []corev1.Volume{
-	//	baseVolume,
-	//	{Name: constants.DataVolumeName, VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}},
-	//	getConfigMapVolume(constants.MapserverName, configMapNames.Mapserver),
-	//}
-	//
-	//if mapfile := obj.Mapfile(); mapfile != nil {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCustomMapfileVolumeName, mapfile.ConfigMapKeyRef.Name))
-	//}
-	//
-	//if obj.Type() == pdoknlv3.ServiceTypeWMS && obj.Options().UseWebserviceProxy() {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapOgcWebserviceProxyVolumeName, configMapNames.OgcWebserviceProxy))
-	//}
-	//
-	//if obj.Options().PrefetchData {
-	//	vol := getConfigMapVolume(constants.InitScriptsName, configMapNames.InitScripts)
-	//	vol.ConfigMap.DefaultMode = smoothoperatorutils.Pointer(int32(0777))
-	//	volumes = append(volumes, vol)
-	//}
-	//
-	//volumes = append(volumes, getConfigMapVolume(constants.ConfigMapCapabilitiesGeneratorVolumeName, configMapNames.CapabilitiesGenerator))
-	//
-	//if obj.Mapfile() == nil {
-	//	volumes = append(volumes, getConfigMapVolume(constants.ConfigMapMapfileGeneratorVolumeName, configMapNames.MapfileGenerator))
-	//}
-	//
-	//if obj.Type() == pdoknlv3.ServiceTypeWMS {
-	//	if obj.Mapfile() == nil {
-	//		wms, _ := any(obj).(*pdoknlv3.WMS)
-	//		volumeProjections := []corev1.VolumeProjection{}
-	//		for _, cm := range wms.Spec.Service.StylingAssets.ConfigMapRefs {
-	//			volumeProjections = append(volumeProjections, corev1.VolumeProjection{
-	//				ConfigMap: &corev1.ConfigMapProjection{LocalObjectReference: corev1.LocalObjectReference{Name: cm.Name}},
-	//			})
-	//		}
-	//
-	//		volumes = append(volumes, corev1.Volume{
-	//			Name:         constants.ConfigMapStylingFilesVolumeName,
-	//			VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: volumeProjections}},
-	//		})
-	//	} else {
-	//		// If there is a custom mapfile, we still want a styling-files volume, even if it is empty
-	//		volumes = append(volumes, corev1.Volume{
-	//			Name:         constants.ConfigMapStylingFilesVolumeName,
-	//			VolumeSource: corev1.VolumeSource{Projected: &corev1.ProjectedVolumeSource{Sources: []corev1.VolumeProjection{}}},
-	//		})
-	//	}
-	//
-	//	volumes = append(
-	//		volumes,
-	//		getConfigMapVolume(constants.ConfigMapFeatureinfoGeneratorVolumeName, configMapNames.FeatureInfoGenerator),
-	//		getConfigMapVolume(constants.ConfigMapLegendGeneratorVolumeName, configMapNames.LegendGenerator),
-	//	)
-	//}
-	//
-	//return volumes
+func getVolumes(_ *pdoknlv2.WMTS, configMapNames types.HashedConfigMapNames) []corev1.Volume { //nolint:revive
+	return []corev1.Volume{
+		{
+			Name:         "data",
+			VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+		}, {
+			Name:         constants.MapproxyVolumeName,
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
+		}, {
+			Name:         constants.LighttpdVolumeName,
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.Mapproxy}}},
+		}, {
+			Name:         constants.ConfigMapCapabilitiesGeneratorVolumeName,
+			VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{LocalObjectReference: corev1.LocalObjectReference{Name: configMapNames.CapabilitiesGenerator}}},
+		},
+	}
 }
 
 func getPodAnnotations(deployment *appsv1.Deployment) map[string]string {
 	annotations := smoothoperatorutils.CloneOrEmptyMap(deployment.Spec.Template.GetAnnotations())
-	//nolint:gocritic
-	//annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
-	//annotations["kubectl.kubernetes.io/default-container"] = constants.MapserverName
-	//annotations["match-regex.version-checker.io/mapserver"] = `^\d\.\d\.\d.*$`
-	//annotations["prometheus.io/scrape"] = "true"
-	//annotations["prometheus.io/port"] = strconv.Itoa(int(constants.ApachePortNr))
-	//annotations["priority.version-checker.io/mapserver"] = "4"
-	//annotations["priority.version-checker.io/ogc-webservice-proxy"] = "4"
+	annotations["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "true"
+	annotations["priority.version-checker.io/mapproxy"] = "4"
+	annotations["priority.version-checker.io/wmts-kvp-to-restful"] = "4"
+	annotations["prometheus.io/port"] = "9117"
+	annotations["prometheus.io/scrape"] = "true"
 	return annotations
 }
