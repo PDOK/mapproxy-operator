@@ -89,8 +89,8 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 	var metaSize string
 	if obj.Spec.Options.Cached {
 		metaSize = "[2,2]"
-		if obj.Spec.Service.Cache.MetaSize != "" {
-			metaSize = obj.Spec.Service.Cache.MetaSize
+		if obj.Spec.Service.Cache.MetaSize != nil {
+			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 
 		result.Cache.BaseDir = to.Ptr("/srv/mapproxy/cache_data")
@@ -98,8 +98,8 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 		result.Cache.TileLockDir = to.Ptr("/srv/mapproxy/cache_data/tile_locks")
 	} else {
 		metaSize = "[1,1]"
-		if obj.Spec.Service.Cache.MetaSize != "" {
-			metaSize = obj.Spec.Service.Cache.MetaSize
+		if obj.Spec.Service.Cache.MetaSize != nil {
+			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 	}
 

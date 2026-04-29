@@ -258,9 +258,8 @@ type SourceWMS struct {
 // WMTSCache Information used to retrieve cached data
 type WMTSCache struct {
 	// Cache retrieval dimensions
-	// +kubebuilder:default="[9,9]"
 	// +kubebuilder:validation:Pattern="^\\[[0-9],[0-9]\\]$"
-	MetaSize string `json:"metaSize"`
+	MetaSize *string `json:"metaSize"`
 	// The azure block. At the moment it is the only cache backing option
 	Azure AzureCache `json:"azure"`
 }

@@ -25,11 +25,6 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 		includeIngress = *src.Spec.Options.IncludeIngress
 	}
 
-	metaSize := "[9,9]"
-	if src.Spec.Options.MetaSize != nil {
-		metaSize = *src.Spec.Options.MetaSize
-	}
-
 	result := v2.WMTS{
 		TypeMeta:   v2.TypeMetaWMTS,
 		ObjectMeta: src.ObjectMeta,
@@ -57,7 +52,7 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 				TileMatrixSets:    getTileMatrixSets(src),
 				Layers:            getLayers(src),
 				Cache: v2.WMTSCache{
-					MetaSize: metaSize,
+					MetaSize: src.Spec.Options.MetaSize,
 					Azure: v2.AzureCache{
 						Container:  "tiles",
 						BlobPrefix: src.Spec.Service.BlobPath,
