@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -16,6 +17,7 @@ func (wmts *WMTS) ValidateCreate(c client.Client) ([]string, error) {
 	warnings := []string{}
 	allErrs := field.ErrorList{}
 	AddGeneralValidationErrorsAndWarnings(wmts, &warnings, &allErrs)
+	checkNonEmptyLabels(wmts, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -49,16 +51,9 @@ func AddGeneralValidationErrorsAndWarnings(wmts *WMTS, warnings *[]string, allEr
 		sharedValidation.AddWarning(warnings, *field.NewPath("metadata").Child("name"), "name should not contain wmts", wmts.GroupVersionKind(), wmts.GetName())
 	}
 
-	layerIDSet := set.Set[string]{}
-	layersPath := field.NewPath("spec").Child("service").Child("layers")
-	for index, layer := range wmts.Spec.Service.Layers {
-		if layerIDSet.Has(layer.Identifier) {
-			*allErrs = append(*allErrs, field.Duplicate(layersPath.Index(index).Child("identifier"), layer.Identifier))
-		}
-		layerIDSet.Insert(layer.Identifier)
-	}
-
+	checkLayerIdentifiers(wmts, warnings, allErrs)
 	checkZoomLevels(wmts, warnings, allErrs)
+	checkReplicas(wmts, allErrs)
 
 	err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wmts.Spec.IngressRouteURLs, wmts.Spec.Service.BaseURL, nil)
 	if err != nil {
@@ -67,6 +62,48 @@ func AddGeneralValidationErrorsAndWarnings(wmts *WMTS, warnings *[]string, allEr
 
 }
 
+// the max replicas should not be smaller than the min replicas
+func checkReplicas(wmts *WMTS, allErrs *field.ErrorList) {
+	path := field.NewPath("spec").Child("horizontalPodAutoscaler")
+	patch := wmts.Spec.HorizontalPodAutoscalerPatch
+
+	// TODO: replace hardcoded defaults with dynamic defaults from cli options or ownerInfo
+	var minReplicas, maxReplicas int32 = 2, 32
+	if patch.MinReplicas != nil {
+		minReplicas = *patch.MinReplicas
+	}
+	if patch.MaxReplicas != nil {
+		maxReplicas = *patch.MaxReplicas
+	}
+
+	if maxReplicas < minReplicas {
+		replicas := fmt.Sprintf("minReplicas: %d, maxReplicas: %d", minReplicas, maxReplicas)
+
+		*allErrs = append(*allErrs, field.Invalid(path, replicas, "maxReplicas cannot be less than minReplicas"))
+	}
+}
+
+// when creating a WMTS, there should be at least one label (preferably more)
+func checkNonEmptyLabels(wmts *WMTS, allErrs *field.ErrorList) {
+	labelError := sharedValidation.ValidateLabelsOnCreate(wmts.Labels)
+	if labelError != nil {
+		*allErrs = append(*allErrs, labelError)
+	}
+}
+
+// layer identifiers must be unique
+func checkLayerIdentifiers(wmts *WMTS, _ *[]string, allErrs *field.ErrorList) {
+	layerIDSet := set.Set[string]{}
+	layersPath := field.NewPath("spec").Child("service").Child("layers")
+	for index, layer := range wmts.Spec.Service.Layers {
+		if layerIDSet.Has(layer.Identifier) {
+			*allErrs = append(*allErrs, field.Duplicate(layersPath.Index(index).Child("identifier"), layer.Identifier))
+		}
+		layerIDSet.Insert(layer.Identifier)
+	}
+}
+
+// zoom level ranges should be valid and not overlap with eachother
 func checkZoomLevels(wmts *WMTS, _ *[]string, allErrs *field.ErrorList) {
 	tileMatrixSetPath := field.NewPath("spec").Child("service").Child("tileMatrixSets")
 	for index, tileMatrixSet := range wmts.Spec.Service.TileMatrixSets {
@@ -117,31 +154,7 @@ func checkZoomLevels(wmts *WMTS, _ *[]string, allErrs *field.ErrorList) {
 	}
 }
 
-type intRange struct {
-	minval int
-	maxval int
-}
-
-func intRangeOverlapsOtherIntRange(current intRange, others []intRange) bool {
-	if len(others) == 0 {
-		return false
-	}
-
-	for _, other := range others {
-		if current.maxval < other.minval {
-			continue
-		}
-
-		if current.minval > other.maxval {
-			continue
-		}
-
-		return true
-	}
-
-	return false
-}
-
+// code ported from mapserver-operator
 func checkChangedUrls(wmtsNew *WMTS, wmtsOld *WMTS, _ *[]string, allErrs *field.ErrorList) {
 	sharedValidation.ValidateIngressRouteURLsNotRemoved(wmtsOld.Spec.IngressRouteURLs, wmtsNew.Spec.IngressRouteURLs, allErrs, nil)
 
@@ -162,4 +175,31 @@ func checkChangedUrls(wmtsNew *WMTS, wmtsOld *WMTS, _ *[]string, allErrs *field.
 		}
 
 	}
+}
+
+// checks if a zoomlevel range does not overlap with all previous intranges
+func intRangeOverlapsOtherIntRange(current intRange, others []intRange) bool {
+	if len(others) == 0 {
+		return false
+	}
+
+	for _, other := range others {
+		if current.maxval < other.minval {
+			continue
+		}
+
+		if current.minval > other.maxval {
+			continue
+		}
+
+		return true
+	}
+
+	return false
+}
+
+// helper struct for tilesetmatrix zoomlevel
+type intRange struct {
+	minval int
+	maxval int
 }

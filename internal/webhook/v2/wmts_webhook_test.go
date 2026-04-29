@@ -20,7 +20,6 @@ import (
 	. "github.com/onsi/gomega"
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
-	corev1 "k8s.io/api/core/v1"
 )
 
 var _ = Describe("WMTS Webhook", func() {
@@ -111,32 +110,6 @@ var _ = Describe("WMTS Webhook", func() {
 			))))
 			Expect(warnings).To(BeEmpty())
 		})
-
-		It("Should deny Create when mapserver container doesn't have ephemeral storage", func() {
-			obj.Spec.PodSpecPatch = corev1.PodSpec{}
-
-			warnings, err := validator.ValidateCreate(ctx, obj)
-			Expect(err).To(Equal(getValidationError(obj, field.Required(field.NewPath("spec").
-				Child("podSpecPatch").
-				Child("containers").
-				Key("mapserver").
-				Child("resources").
-				Child("limits").
-				Child(corev1.ResourceEphemeralStorage.String()), ""))))
-			Expect(warnings).To(BeEmpty())
-		})
-
-		//nolint:gocritic
-		//It("Should deny creation if multiple featureTypes have the same name", func() {
-		//	Expect(len(obj.Spec.Service.FeatureTypes)).To(BeNumerically(">", 1))
-		//	obj.Spec.Service.FeatureTypes[1].Name = obj.Spec.Service.FeatureTypes[0].Name
-		//	warnings, err := validator.ValidateCreate(ctx, obj)
-		//	Expect(err).To(Equal(getValidationError(obj, field.Duplicate(
-		//		field.NewPath("spec").Child("service").Child("featureTypes").Index(1).Child("name"),
-		//		obj.Spec.Service.FeatureTypes[1].Name,
-		//	))))
-		//	Expect(warnings).To(BeEmpty())
-		//})
 
 		It("Should deny update if a ingressRouteURL was removed", func() {
 			url, err := smoothoperatormodel.ParseURL("http://new.url/path")
@@ -262,7 +235,7 @@ var _ = Describe("WMTS Webhook", func() {
 })
 
 func readSample(wmts *pdoknlv2.WMTS) error {
-	sampleYaml, err := os.ReadFile("test_data/v3_wmts.yaml")
+	sampleYaml, err := os.ReadFile("../test_data/v2_wmts.yaml")
 	if err != nil {
 		return err
 	}
@@ -284,9 +257,9 @@ func getValidationError(obj *pdoknlv2.WMTS, errorList *field.Error) error {
 
 func getValidationWarnings(obj *pdoknlv2.WMTS, path field.Path, warning string, warnings []string) admission.Warnings {
 	validation.AddWarning(&warnings, path, warning, schema.GroupVersionKind{
-		Group:   pdoknlv2.GroupKind.String(),
-		Version: "v3",
-		Kind:    "WMTS",
+		Group:   "pdok.nl",
+		Version: pdoknlv2.GroupVersion.Version,
+		Kind:    pdoknlv2.GroupKind.Kind,
 	}, obj.GetName())
 	return warnings
 }

@@ -42,7 +42,7 @@ spec:
         resources: {}
   service:
     abstract: My service abstract
-    baseUrl: https://service.pdok.nl/owner/dataset/wmts/v1_0
+    baseUrl: https://test.pdok.nl/owner/dataset/wmts/v1_0
     cache:
       azure:
         blobPrefix: owner/dataset/3
