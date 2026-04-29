@@ -73,6 +73,10 @@ func (w *WMTS) GetIngressRouteUrls() []smoothoperatormodel.URL {
 	return result
 }
 
+func (w *WMTS) URL() smoothoperatormodel.URL {
+	return w.Spec.Service.BaseURL
+}
+
 // +kubebuilder:object:root=true
 type WMTSList struct {
 	metav1.TypeMeta `json:",inline"`

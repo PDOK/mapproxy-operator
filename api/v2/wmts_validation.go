@@ -12,29 +12,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (wmts *WMTS) ValidateCreate(c client.Client) ([]string, error) {
+func (w *WMTS) ValidateCreate(c client.Client) ([]string, error) {
 	_ = c
 	warnings := []string{}
 	allErrs := field.ErrorList{}
-	AddGeneralValidationErrorsAndWarnings(wmts, &warnings, &allErrs)
-	checkNonEmptyLabels(wmts, &allErrs)
+	AddGeneralValidationErrorsAndWarnings(w, &warnings, &allErrs)
+	checkNonEmptyLabels(w, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
 	}
 	return warnings, apierrors.NewInvalid(
 		GroupKind,
-		wmts.GetName(), allErrs)
+		w.GetName(), allErrs)
 }
 
-func (wmts *WMTS) ValidateUpdate(c client.Client, wmtsOld *WMTS) ([]string, error) {
+func (w *WMTS) ValidateUpdate(c client.Client, wmtsOld *WMTS) ([]string, error) {
 	_ = c
 	warnings := []string{}
 	allErrs := field.ErrorList{}
-	AddGeneralValidationErrorsAndWarnings(wmts, &warnings, &allErrs)
+	AddGeneralValidationErrorsAndWarnings(w, &warnings, &allErrs)
 
-	checkChangedUrls(wmts, wmtsOld, &warnings, &allErrs)
-	sharedValidation.ValidateLabelsOnUpdate(wmtsOld.Labels, wmts.Labels, &allErrs)
+	checkChangedUrls(w, wmtsOld, &warnings, &allErrs)
+	sharedValidation.ValidateLabelsOnUpdate(wmtsOld.Labels, w.Labels, &allErrs)
 
 	if len(allErrs) == 0 {
 		return warnings, nil
@@ -42,7 +42,7 @@ func (wmts *WMTS) ValidateUpdate(c client.Client, wmtsOld *WMTS) ([]string, erro
 
 	return warnings, apierrors.NewInvalid(
 		GroupKind,
-		wmts.GetName(), allErrs)
+		w.GetName(), allErrs)
 }
 
 // AddGeneralValidationErrorsAndWarnings Validates the WMTS as an independent unit and adds warnings and errors to lists

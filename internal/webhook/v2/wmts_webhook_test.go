@@ -257,7 +257,7 @@ func getValidationError(obj *pdoknlv2.WMTS, errorList *field.Error) error {
 
 func getValidationWarnings(obj *pdoknlv2.WMTS, path field.Path, warning string, warnings []string) admission.Warnings {
 	validation.AddWarning(&warnings, path, warning, schema.GroupVersionKind{
-		Group:   "pdok.nl",
+		Group:   pdoknlv2.GroupVersion.Group,
 		Version: pdoknlv2.GroupVersion.Version,
 		Kind:    pdoknlv2.GroupKind.Kind,
 	}, obj.GetName())

@@ -3,6 +3,7 @@ package capabilitiesgenerator
 import (
 	"encoding/xml"
 	"fmt"
+	"strings"
 
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/ogc-specifications/pkg/wmts100"
@@ -221,6 +222,7 @@ func getLayerCapabilities(wmts *v2.WMTS, layer v2.WMTSLayer) wmts100.Layer {
 		Identifier:        layer.Identifier,
 		TileMatrixSetLink: getTileMatrixSetLinks(wmts),
 		ResourceURL:       getResourceUrls(wmts, &layer),
+		Format:            []string{"image/png"},
 	}
 
 	if wmts.Spec.Options.GetFeatureInfo {
@@ -228,11 +230,15 @@ func getLayerCapabilities(wmts *v2.WMTS, layer v2.WMTSLayer) wmts100.Layer {
 	}
 
 	for _, style := range layer.Styles {
+		url := wmts.URL().String()
+		if !strings.HasSuffix(url, "/") {
+			url += "/"
+		}
 		var legendURL []*wmts100.LegendURL
 		if style.Legend.BlobKey != "" {
 			legendURL = []*wmts100.LegendURL{{
 				Format: "image/png",
-				Href:   style.Legend.BlobKey,
+				Href:   fmt.Sprintf("%s%s/%s", url, layer.Identifier, "legend.png"),
 			}}
 		}
 
