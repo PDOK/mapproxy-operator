@@ -414,7 +414,7 @@ type Cache struct {
 type CacheDetails struct {
 	Type          string `yaml:"type"`
 	Directory     string `yaml:"directory"`
-	ContainerName string `yaml:"containerName"`
+	ContainerName string `yaml:"container_name"`
 }
 
 type Source struct {
