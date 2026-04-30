@@ -428,7 +428,7 @@ type Source struct {
 	Req          SourceReq      `yaml:"req"`
 }
 
-func (s *Source) Equal(o *Source) bool {
+func (s *Source) Equal(o *Source) bool { //nolint:cyclop
 	if s.Type != o.Type {
 		return false
 	}
@@ -445,11 +445,11 @@ func (s *Source) Equal(o *Source) bool {
 		return false
 	}
 
-	if math.Abs(*s.MinRes-*o.MinRes) > 1e-8 {
+	if (s.MinRes == nil && o.MinRes != nil) || (s.MinRes != nil && o.MinRes == nil) || (s.MinRes != nil && math.Abs(*s.MinRes-*o.MinRes) > 1e-8) {
 		return false
 	}
 
-	if math.Abs(*s.MaxRes-*o.MaxRes) > 1e-8 {
+	if (s.MaxRes == nil && o.MaxRes != nil) || (s.MaxRes != nil && o.MaxRes == nil) || (s.MaxRes != nil && math.Abs(*s.MaxRes-*o.MaxRes) > 1e-8) {
 		return false
 	}
 
