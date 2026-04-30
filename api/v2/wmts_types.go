@@ -257,11 +257,15 @@ type SourceWMS struct {
 
 // WMTSCache Information used to retrieve cached data
 type WMTSCache struct {
-	// Cache retrieval dimensions
-	// +kubebuilder:validation:Pattern="^\\[[0-9],[0-9]\\]$"
-	MetaSize *string `json:"metaSize"`
+	MetaSize *CacheMetaSize `json:"metaSize"`
 	// The azure block. At the moment it is the only cache backing option
 	Azure AzureCache `json:"azure"`
+}
+
+// CacheMetaSize The number of rows and columns that mapproxy retrieves at once
+type CacheMetaSize struct {
+	Rows int `json:"rows"`
+	Cols int `json:"cols"`
 }
 
 // AzureCache Cache information based on the Azure Blob Store

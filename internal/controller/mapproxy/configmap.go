@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -20,13 +19,13 @@ func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
 	ingressRouteUrls := obj.GetIngressRouteUrls()
 	for _, url := range ingressRouteUrls {
 		path := url.Path
-		stringBuilder.WriteString(fmt.Sprintf(`  "^%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",%s`, path, "\n"))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",%s`, path, "\n")) //nolint:staticcheck
 		for _, layer := range obj.Spec.Service.Layers {
 			if len(layer.Styles) > 0 {
-				stringBuilder.WriteString(fmt.Sprintf(`  "^%s/%s/legend.png" => "/images/%s",%s`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName(), "\n"))
+				stringBuilder.WriteString(fmt.Sprintf(`  "^%s/%s/legend.png" => "/images/%s",%s`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName(), "\n")) //nolint:staticcheck
 			}
 		}
-		stringBuilder.WriteString(fmt.Sprintf(`  "^%s/(.*)" => "/mapproxy/wmts/$1",%s`, path, "\n"))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s/(.*)" => "/mapproxy/wmts/$1",%s`, path, "\n")) //nolint:staticcheck
 	}
 	stringBuilder.WriteString(`  "^/mapproxy/.*" => "/hide_direct_url"` + "\n")
 
@@ -86,9 +85,12 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 		},
 	}
 
-	var metaSize string
+	var metaSize pdoknlv2.CacheMetaSize
 	if obj.Spec.Options.Cached {
-		metaSize = "[2,2]"
+		metaSize = pdoknlv2.CacheMetaSize{
+			Rows: 2,
+			Cols: 2,
+		}
 		if obj.Spec.Service.Cache.MetaSize != nil {
 			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
@@ -97,17 +99,16 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 		result.Cache.LockDir = to.Ptr("/srv/mapproxy/cache_data/locks")
 		result.Cache.TileLockDir = to.Ptr("/srv/mapproxy/cache_data/tile_locks")
 	} else {
-		metaSize = "[1,1]"
+		metaSize = pdoknlv2.CacheMetaSize{
+			Rows: 1,
+			Cols: 1,
+		}
 		if obj.Spec.Service.Cache.MetaSize != nil {
 			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 	}
 
-	// string to separate ints
-	splitMetaSize := strings.Split(metaSize, ",")
-	elem1, _ := strconv.Atoi(splitMetaSize[0][1:])
-	elem2, _ := strconv.Atoi(splitMetaSize[1][0 : len(splitMetaSize[1])-1])
-	result.Cache.MetaSize = []int{elem1, elem2}
+	result.Cache.MetaSize = []int{metaSize.Rows, metaSize.Cols}
 
 	return result
 }

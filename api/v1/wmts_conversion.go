@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/smooth-operator/model"
@@ -23,6 +24,19 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 	includeIngress := true
 	if src.Spec.Options.IncludeIngress != nil {
 		includeIngress = *src.Spec.Options.IncludeIngress
+	}
+
+	var metaSize *v2.CacheMetaSize
+	if src.Spec.Options.MetaSize != nil {
+		withoutBrackets := (*src.Spec.Options.MetaSize)[1 : len(*src.Spec.Options.MetaSize)-1]
+		split := strings.Split(withoutBrackets, ",")
+		rows, _ := strconv.Atoi(split[0])
+		cols, _ := strconv.Atoi(split[1])
+
+		metaSize = &v2.CacheMetaSize{
+			Rows: rows,
+			Cols: cols,
+		}
 	}
 
 	result := v2.WMTS{
@@ -52,7 +66,7 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 				TileMatrixSets:    getTileMatrixSets(src),
 				Layers:            getLayers(src),
 				Cache: v2.WMTSCache{
-					MetaSize: src.Spec.Options.MetaSize,
+					MetaSize: metaSize,
 					Azure: v2.AzureCache{
 						Container:  "tiles",
 						BlobPrefix: src.Spec.Service.BlobPath,
