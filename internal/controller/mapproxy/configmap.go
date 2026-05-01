@@ -44,7 +44,7 @@ func GetMapproxyConfig(obj *pdoknlv2.WMTS) (MapproxyConfig, error) {
 			Wmts: ServiceWMTS{
 				Kvp:                true,
 				Restful:            true,
-				FeatureinfoFormats: nil,
+				FeatureinfoFormats: getFeatureInfoFormats(obj),
 			},
 		},
 		Layers:  getMapproxyLayers(obj),
@@ -111,6 +111,29 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 	result.Cache.MetaSize = []int{metaSize.Rows, metaSize.Cols}
 
 	return result
+}
+
+func getFeatureInfoFormats(obj *pdoknlv2.WMTS) []WMTSFeatureInfoFormat {
+	if !obj.Spec.Options.GetFeatureInfo {
+		return nil
+	}
+	return []WMTSFeatureInfoFormat{
+		{
+			MimeType: "text/html",
+			Suffix:   "html",
+		},
+		{
+			MimeType: "text/xml",
+			Suffix:   "xml",
+		},
+		{
+			MimeType: "application/json",
+			Suffix:   "json",
+		},
+		{
+			MimeType: "text/plain",
+			Suffix:   "txt",
+		}}
 }
 
 func getMapproxyLayers(obj *pdoknlv2.WMTS) []Layer {
@@ -367,7 +390,7 @@ type ServiceWMTS struct {
 }
 
 type WMTSFeatureInfoFormat struct {
-	MimeType string `yaml:"mime_type"`
+	MimeType string `yaml:"mimetype"`
 	Suffix   string `yaml:"suffix"`
 }
 
