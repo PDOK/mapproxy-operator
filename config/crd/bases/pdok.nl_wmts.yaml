@@ -770,13 +770,19 @@ spec:
                         - container
                         type: object
                       metaSize:
-                        default: '[9,9]'
-                        description: Cache retrieval dimensions
-                        pattern: ^\[[0-9],[0-9]\]$
-                        type: string
+                        description: CacheMetaSize The number of rows and columns
+                          that mapproxy retrieves at once
+                        properties:
+                          cols:
+                            type: integer
+                          rows:
+                            type: integer
+                        required:
+                        - cols
+                        - rows
+                        type: object
                     required:
                     - azure
-                    - metaSize
                     type: object
                   layers:
                     description: Queryable layers

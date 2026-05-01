@@ -2,6 +2,13 @@
 
 TAG=$1
 
+currentcontext=$(kubectx)
+
+if [[ $? != 0 || $currentcontext != "default" ]]; then
+  echo "Local cluster could not be detected"
+  exit 1
+fi
+
 echo "Running: make generate"
 make generate
 
