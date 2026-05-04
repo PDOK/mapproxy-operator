@@ -14,7 +14,7 @@ import (
 
 func mutateHorizontalPodAutoscaler(r *WMTSReconciler, obj *pdoknlv2.WMTS, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
 	reconcilerClient := r.Client
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, autoscaler, labels); err != nil {
 		return err
 	}

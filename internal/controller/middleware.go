@@ -25,7 +25,7 @@ func getBareCorsHeadersMiddleware(obj *pdoknlv2.WMTS) *traefikiov1alpha1.Middlew
 func mutateCorsHeadersMiddleware(r *WMTSReconciler, obj *pdoknlv2.WMTS, middleware *traefikiov1alpha1.Middleware) error {
 	reconcilerClient := r.Client
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, middleware, labels); err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func mutateCorsHeadersMiddleware(r *WMTSReconciler, obj *pdoknlv2.WMTS, middlewa
 		Headers: &dynamic.Headers{
 			CustomResponseHeaders: map[string]string{
 				"Access-Control-Allow-Headers": "Content-Type",
-				"Access-Control-Allow-Method":  "GET, POST, OPTIONS",
+				"Access-Control-Allow-Method":  "GET, OPTIONS",
 				"Access-Control-Allow-Origin":  "*",
 				"Cache-Control":                "public, max-age=3600, no-transform",
 			},
