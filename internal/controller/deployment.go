@@ -32,8 +32,8 @@ func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.
 	deployment.Spec.Strategy = appsv1.DeploymentStrategy{
 		Type: appsv1.RollingUpdateDeploymentStrategyType,
 		RollingUpdate: &appsv1.RollingUpdateDeployment{
-			MaxUnavailable: &intstr.IntOrString{IntVal: 1},
-			MaxSurge:       &intstr.IntOrString{IntVal: 1},
+			MaxUnavailable: &intstr.IntOrString{IntVal: 0},
+			MaxSurge:       &intstr.IntOrString{IntVal: 4},
 		},
 	}
 
