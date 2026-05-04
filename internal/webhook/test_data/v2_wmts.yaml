@@ -47,7 +47,9 @@ spec:
       azure:
         blobPrefix: owner/dataset/3
         container: public
-      metaSize: '[8,8]'
+      metaSize:
+        rows: 8
+        cols: 8
     layers:
       - abstract: Testservice layer abstract
         identifier: mylayer
