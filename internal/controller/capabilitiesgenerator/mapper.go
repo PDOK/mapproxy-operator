@@ -127,7 +127,7 @@ func getFeatureInfoOperation(wmts *v2.WMTS) *wmts100.Operation {
 func getEncodingGetMethod(wmts *v2.WMTS) Method {
 	return Method{
 		Type: "simple",
-		Href: wmts.Spec.Service.BaseURL.String() + "?",
+		Href: wmts.URL().String() + "?",
 		Constraint: []Constraint{{
 			Name: "GetEncoding",
 			AllowedValues: AllowedValues{
