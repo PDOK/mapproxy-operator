@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"regexp"
+	"fmt"
 	"strings"
 
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
@@ -33,7 +33,7 @@ func getBareIngressRoute(obj *pdoknlv2.WMTS, suffix string) *traefikiov1alpha1.I
 func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := r.Client
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
 		return err
 	}
@@ -45,12 +45,14 @@ func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRout
 			obj.GetAnnotations(),
 			obj.TypedName(),
 			getUptimeName(obj),
-			obj.Spec.Service.BaseURL.String()+"?"+queryString,
+			obj.Spec.Service.BaseURL.String()+"/"+queryString,
 			obj.GetLabels(),
 		)
+
+		ingressRoute.Annotations["uptime.pdok.nl/tags"] = "public-stats,wmts"
 	}
 
-	mapproxyService := getTraefixService(obj, constants.MapserverPortNr)
+	mapproxyService := getTraefixService(obj, constants.MapproxyPortNumber)
 
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
 		Name: getBareCorsHeadersMiddleware(obj).GetName(),
@@ -70,15 +72,19 @@ func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRout
 func mutateRestfulIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := r.Client
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
 		return err
 	}
 
 	// restful ingress should not be considered for uptime
+	if ingressRoute.Annotations == nil {
+		ingressRoute.Annotations = make(map[string]string)
+	}
+
 	ingressRoute.Annotations["uptime.pdok.nl/ignore"] = "-"
 
-	mapproxyService := getTraefixService(obj, constants.MapproxyPortNumber)
+	mapproxyService := getTraefixService(obj, constants.MapserverPortNr)
 
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
 		Name: getBareCorsHeadersMiddleware(obj).GetName(),
@@ -118,21 +124,29 @@ func makeRoute(match string, service traefikiov1alpha1.Service, middlewareRef tr
 }
 
 // getUptimeName transforms the CR name into a uptime.pdok.nl/name value
-// owner-dataset-v1-0 -> OWNER dataset v1_0 [INSPIRE] [WMS|WFS]
 func getUptimeName(obj *pdoknlv2.WMTS) string {
-	// Extract the version from the CR name, owner-dataset-v1-0 -> owner-dataset + v1-0
-	versionMatcher := regexp.MustCompile("^(.*)(?:-(v?[1-9](?:-[0-9])?))?$")
-	match := versionMatcher.FindStringSubmatch(obj.GetName())
-
-	nameParts := strings.Split(match[1], "-")
-	nameParts[0] = strings.ToUpper(nameParts[0])
-
-	// Add service version if found
-	if len(match) > 2 && len(match[2]) > 0 {
-		nameParts = append(nameParts, strings.ReplaceAll(match[2], "-", "_"))
+	url := obj.URL()
+	path := url.Path
+	split := strings.Split(path, "/")
+	owner := "owner"
+	dataset := "dataset"
+	version := "v1_0"
+	if len(split) > 1 {
+		owner = split[1]
+		owner = strings.Replace(owner, "-", " ", 99)
+		owner = strings.ToUpper(owner)
 	}
 
-	return strings.Join(append(nameParts, "wmts"), " ")
+	if len(split) > 2 {
+		dataset = split[2]
+		dataset = strings.Replace(dataset, "-", " ", 99)
+	}
+
+	if len(split) > 4 {
+		version = split[4]
+	}
+
+	return fmt.Sprintf("%s %s %s WMTS", owner, dataset, version)
 }
 
 func getExactMatchRule(url smoothoperatormodel.URL) string {
@@ -146,9 +160,14 @@ func getExactMatchRule(url smoothoperatormodel.URL) string {
 
 func getPrefixMatchRule(url smoothoperatormodel.URL) string {
 	host := url.Hostname()
-	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && PathPrefix(`" + url.Path + "`)"
+	path := url.Path
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + url.Path + "`)"
+	if strings.Contains(host, "localhost") {
+		return "Host(`localhost`) && PathPrefix(`" + path + "`)"
+	}
+
+	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + path + "`)"
 }
