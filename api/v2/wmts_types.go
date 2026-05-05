@@ -73,6 +73,10 @@ func (w *WMTS) GetIngressRouteUrls() []smoothoperatormodel.URL {
 	return result
 }
 
+func (w *WMTS) URL() smoothoperatormodel.URL {
+	return w.Spec.Service.BaseURL
+}
+
 // +kubebuilder:object:root=true
 type WMTSList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -253,12 +257,16 @@ type SourceWMS struct {
 
 // WMTSCache Information used to retrieve cached data
 type WMTSCache struct {
-	// Cache retrieval dimensions
-	// +kubebuilder:default="[9,9]"
-	// +kubebuilder:validation:Pattern="^\\[[0-9],[0-9]\\]$"
-	MetaSize string `json:"metaSize"`
+	// +kubebuilder:validation:Optional
+	MetaSize *CacheMetaSize `json:"metaSize,omitempty"`
 	// The azure block. At the moment it is the only cache backing option
 	Azure AzureCache `json:"azure"`
+}
+
+// CacheMetaSize The number of rows and columns that mapproxy retrieves at once
+type CacheMetaSize struct {
+	Rows int `json:"rows"`
+	Cols int `json:"cols"`
 }
 
 // AzureCache Cache information based on the Azure Blob Store

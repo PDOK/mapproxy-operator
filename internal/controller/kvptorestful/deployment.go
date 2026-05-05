@@ -17,7 +17,7 @@ func GetKvpToRestfulContainer(images *types.Images) (*corev1.Container, error) {
 		Command: []string{"wmts-kvp-to-restful"},
 		Args:    []string{"-host=http://127.0.0.1:80", "-t=/var/www/WMTSCapabilities.xml", "-d=15"},
 		Ports: []corev1.ContainerPort{{
-			ContainerPort: 9001,
+			ContainerPort: constants.MapproxyPortNumber,
 			Protocol:      corev1.ProtocolTCP,
 		}},
 		Resources: corev1.ResourceRequirements{
@@ -45,7 +45,7 @@ func getProbe() *corev1.Probe {
 		ProbeHandler: corev1.ProbeHandler{
 			HTTPGet: &corev1.HTTPGetAction{
 				Path: "/health",
-				Port: intstr.IntOrString{Type: intstr.Int, IntVal: 9001},
+				Port: intstr.IntOrString{Type: intstr.Int, IntVal: constants.MapproxyPortNumber},
 			},
 		},
 		InitialDelaySeconds: 5,

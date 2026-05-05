@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"regexp"
+	"fmt"
 	"strings"
 
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
@@ -21,19 +21,19 @@ func SetUptimeOperatorAnnotations(set bool) {
 	setUptimeOperatorAnnotations = set
 }
 
-func getBareIngressRoute(obj *pdoknlv2.WMTS) *traefikiov1alpha1.IngressRoute {
+func getBareIngressRoute(obj *pdoknlv2.WMTS, suffix string) *traefikiov1alpha1.IngressRoute {
 	return &traefikiov1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, constants.MapproxyName),
+			Name:      getSuffixedName(obj, suffix),
 			Namespace: obj.GetNamespace(),
 		},
 	}
 }
 
-func mutateIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
+func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := r.Client
 
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
 	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
 		return err
 	}
@@ -45,38 +45,22 @@ func mutateIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *tra
 			obj.GetAnnotations(),
 			obj.TypedName(),
 			getUptimeName(obj),
-			obj.Spec.Service.BaseURL.String()+"?"+queryString,
+			obj.Spec.Service.BaseURL.String()+"/"+queryString,
 			obj.GetLabels(),
 		)
+
+		ingressRoute.Annotations["uptime.pdok.nl/tags"] = "public-stats,wmts"
 	}
 
-	mapproxyService := traefikiov1alpha1.Service{
-		LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
-			Name: getBareService(obj).GetName(),
-			Kind: "Service",
-			Port: intstr.IntOrString{
-				Type:   intstr.Int,
-				IntVal: constants.MapserverPortNr,
-			},
-		},
-	}
+	mapproxyService := getTraefixService(obj, constants.MapproxyPortNumber)
 
 	middlewareRef := traefikiov1alpha1.MiddlewareRef{
 		Name: getBareCorsHeadersMiddleware(obj).GetName(),
 	}
 
-	makeRoute := func(match string, service traefikiov1alpha1.Service, middlewareRef traefikiov1alpha1.MiddlewareRef) traefikiov1alpha1.Route {
-		return traefikiov1alpha1.Route{
-			Kind:        "Rule",
-			Match:       match,
-			Services:    []traefikiov1alpha1.Service{service},
-			Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
-		}
-	}
-
 	ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{}
-	for _, ingressRouteURL := range obj.Spec.IngressRouteURLs {
-		ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getMatchRule(ingressRouteURL.URL), mapproxyService, middlewareRef))
+	for _, ingressRouteURL := range obj.GetIngressRouteUrls() {
+		ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getExactMatchRule(ingressRouteURL), mapproxyService, middlewareRef))
 	}
 
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
@@ -85,25 +69,87 @@ func mutateIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *tra
 	return ctrl.SetControllerReference(obj, ingressRoute, r.Scheme)
 }
 
-// getUptimeName transforms the CR name into a uptime.pdok.nl/name value
-// owner-dataset-v1-0 -> OWNER dataset v1_0 [INSPIRE] [WMS|WFS]
-func getUptimeName(obj *pdoknlv2.WMTS) string {
-	// Extract the version from the CR name, owner-dataset-v1-0 -> owner-dataset + v1-0
-	versionMatcher := regexp.MustCompile("^(.*)(?:-(v?[1-9](?:-[0-9])?))?$")
-	match := versionMatcher.FindStringSubmatch(obj.GetName())
+func mutateRestfulIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
+	reconcilerClient := r.Client
 
-	nameParts := strings.Split(match[1], "-")
-	nameParts[0] = strings.ToUpper(nameParts[0])
-
-	// Add service version if found
-	if len(match) > 2 && len(match[2]) > 0 {
-		nameParts = append(nameParts, strings.ReplaceAll(match[2], "-", "_"))
+	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
+	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
+		return err
 	}
 
-	return strings.Join(append(nameParts, "wmts"), " ")
+	// restful ingress should not be considered for uptime
+	if ingressRoute.Annotations == nil {
+		ingressRoute.Annotations = make(map[string]string)
+	}
+
+	ingressRoute.Annotations["uptime.pdok.nl/ignore"] = "-"
+
+	mapproxyService := getTraefixService(obj, constants.MapserverPortNr)
+
+	middlewareRef := traefikiov1alpha1.MiddlewareRef{
+		Name: getBareCorsHeadersMiddleware(obj).GetName(),
+	}
+
+	ingressRoute.Spec.Routes = []traefikiov1alpha1.Route{}
+	for _, ingressRouteURL := range obj.GetIngressRouteUrls() {
+		ingressRoute.Spec.Routes = append(ingressRoute.Spec.Routes, makeRoute(getPrefixMatchRule(ingressRouteURL), mapproxyService, middlewareRef))
+	}
+
+	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, ingressRoute, ingressRoute); err != nil {
+		return err
+	}
+	return ctrl.SetControllerReference(obj, ingressRoute, r.Scheme)
 }
 
-func getMatchRule(url smoothoperatormodel.URL) string {
+func getTraefixService(obj *pdoknlv2.WMTS, port int32) traefikiov1alpha1.Service {
+	return traefikiov1alpha1.Service{
+		LoadBalancerSpec: traefikiov1alpha1.LoadBalancerSpec{
+			Name: getBareService(obj).GetName(),
+			Kind: "Service",
+			Port: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: port,
+			},
+		},
+	}
+}
+
+func makeRoute(match string, service traefikiov1alpha1.Service, middlewareRef traefikiov1alpha1.MiddlewareRef) traefikiov1alpha1.Route {
+	return traefikiov1alpha1.Route{
+		Kind:        "Rule",
+		Match:       match,
+		Services:    []traefikiov1alpha1.Service{service},
+		Middlewares: []traefikiov1alpha1.MiddlewareRef{middlewareRef},
+	}
+}
+
+// getUptimeName transforms the CR name into a uptime.pdok.nl/name value
+func getUptimeName(obj *pdoknlv2.WMTS) string {
+	url := obj.URL()
+	path := url.Path
+	split := strings.Split(path, "/")
+	owner := "owner"
+	dataset := "dataset"
+	version := "v1_0"
+	if len(split) > 1 {
+		owner = split[1]
+		owner = strings.Replace(owner, "-", " ", 99)
+		owner = strings.ToUpper(owner)
+	}
+
+	if len(split) > 2 {
+		dataset = split[2]
+		dataset = strings.Replace(dataset, "-", " ", 99)
+	}
+
+	if len(split) > 4 {
+		version = split[4]
+	}
+
+	return fmt.Sprintf("%s %s %s WMTS", owner, dataset, version)
+}
+
+func getExactMatchRule(url smoothoperatormodel.URL) string {
 	host := url.Hostname()
 	if strings.Contains(host, "localhost") {
 		return "Host(`localhost`) && Path(`" + url.Path + "`)"
@@ -112,11 +158,16 @@ func getMatchRule(url smoothoperatormodel.URL) string {
 	return "(Host(`localhost`) || Host(`" + host + "`)) && Path(`" + url.Path + "`)"
 }
 
-func getLegendMatchRule(url smoothoperatormodel.URL) string { //nolint:unused
+func getPrefixMatchRule(url smoothoperatormodel.URL) string {
 	host := url.Hostname()
-	if strings.Contains(host, "localhost") {
-		return "Host(`localhost`) && PathPrefix(`" + url.Path + "/legend`)"
+	path := url.Path
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
 	}
 
-	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + url.Path + "/legend`)"
+	if strings.Contains(host, "localhost") {
+		return "Host(`localhost`) && PathPrefix(`" + path + "`)"
+	}
+
+	return "(Host(`localhost`) || Host(`" + host + "`)) && PathPrefix(`" + path + "`)"
 }

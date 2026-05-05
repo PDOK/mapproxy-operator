@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
@@ -20,13 +19,13 @@ func GetInclude(obj *pdoknlv2.WMTS) (string, error) {
 	ingressRouteUrls := obj.GetIngressRouteUrls()
 	for _, url := range ingressRouteUrls {
 		path := url.Path
-		stringBuilder.WriteString(fmt.Sprintf(`  "^%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",%s`, path, "\n"))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s(/1\.0\.0)?/[Ww][Mm][Tt][Ss][Cc]apabilities\.xml" => "/WMTSCapabilities.xml",%s`, path, "\n")) //nolint:staticcheck
 		for _, layer := range obj.Spec.Service.Layers {
 			if len(layer.Styles) > 0 {
-				stringBuilder.WriteString(fmt.Sprintf(`  "^%s/%s/legend.png" => "/images/%s",%s`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName(), "\n"))
+				stringBuilder.WriteString(fmt.Sprintf(`  "^%s/%s/legend.png" => "/images/%s",%s`, path, layer.Identifier, layer.Styles[0].Legend.GetBlobKeyName(), "\n")) //nolint:staticcheck
 			}
 		}
-		stringBuilder.WriteString(fmt.Sprintf(`  "^%s/(.*)" => "/mapproxy/wmts/$1",%s`, path, "\n"))
+		stringBuilder.WriteString(fmt.Sprintf(`  "^%s/(.*)" => "/mapproxy/wmts/$1",%s`, path, "\n")) //nolint:staticcheck
 	}
 	stringBuilder.WriteString(`  "^/mapproxy/.*" => "/hide_direct_url"` + "\n")
 
@@ -45,7 +44,7 @@ func GetMapproxyConfig(obj *pdoknlv2.WMTS) (MapproxyConfig, error) {
 			Wmts: ServiceWMTS{
 				Kvp:                true,
 				Restful:            true,
-				FeatureinfoFormats: nil,
+				FeatureinfoFormats: getFeatureInfoFormats(obj),
 			},
 		},
 		Layers:  getMapproxyLayers(obj),
@@ -86,30 +85,55 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 		},
 	}
 
-	var metaSize string
+	var metaSize pdoknlv2.CacheMetaSize
 	if obj.Spec.Options.Cached {
-		metaSize = "[2,2]"
-		if obj.Spec.Service.Cache.MetaSize != "" {
-			metaSize = obj.Spec.Service.Cache.MetaSize
+		metaSize = pdoknlv2.CacheMetaSize{
+			Rows: 2,
+			Cols: 2,
+		}
+		if obj.Spec.Service.Cache.MetaSize != nil {
+			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 
 		result.Cache.BaseDir = to.Ptr("/srv/mapproxy/cache_data")
 		result.Cache.LockDir = to.Ptr("/srv/mapproxy/cache_data/locks")
 		result.Cache.TileLockDir = to.Ptr("/srv/mapproxy/cache_data/tile_locks")
 	} else {
-		metaSize = "[1,1]"
-		if obj.Spec.Service.Cache.MetaSize != "" {
-			metaSize = obj.Spec.Service.Cache.MetaSize
+		metaSize = pdoknlv2.CacheMetaSize{
+			Rows: 1,
+			Cols: 1,
+		}
+		if obj.Spec.Service.Cache.MetaSize != nil {
+			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 	}
 
-	// string to separate ints
-	splitMetaSize := strings.Split(metaSize, ",")
-	elem1, _ := strconv.Atoi(splitMetaSize[0][1:])
-	elem2, _ := strconv.Atoi(splitMetaSize[1][0 : len(splitMetaSize[1])-1])
-	result.Cache.MetaSize = []int{elem1, elem2}
+	result.Cache.MetaSize = []int{metaSize.Rows, metaSize.Cols}
 
 	return result
+}
+
+func getFeatureInfoFormats(obj *pdoknlv2.WMTS) []WMTSFeatureInfoFormat {
+	if !obj.Spec.Options.GetFeatureInfo {
+		return nil
+	}
+	return []WMTSFeatureInfoFormat{
+		{
+			MimeType: "text/html",
+			Suffix:   "html",
+		},
+		{
+			MimeType: "text/xml",
+			Suffix:   "xml",
+		},
+		{
+			MimeType: "application/json",
+			Suffix:   "json",
+		},
+		{
+			MimeType: "text/plain",
+			Suffix:   "txt",
+		}}
 }
 
 func getMapproxyLayers(obj *pdoknlv2.WMTS) []Layer {
@@ -366,7 +390,7 @@ type ServiceWMTS struct {
 }
 
 type WMTSFeatureInfoFormat struct {
-	MimeType string `yaml:"mime_type"`
+	MimeType string `yaml:"mimetype"`
 	Suffix   string `yaml:"suffix"`
 }
 
@@ -414,7 +438,7 @@ type Cache struct {
 type CacheDetails struct {
 	Type          string `yaml:"type"`
 	Directory     string `yaml:"directory"`
-	ContainerName string `yaml:"containerName"`
+	ContainerName string `yaml:"container_name"`
 }
 
 type Source struct {
@@ -427,7 +451,7 @@ type Source struct {
 	Req          SourceReq      `yaml:"req"`
 }
 
-func (s *Source) Equal(o *Source) bool {
+func (s *Source) Equal(o *Source) bool { //nolint:cyclop
 	if s.Type != o.Type {
 		return false
 	}
@@ -444,11 +468,11 @@ func (s *Source) Equal(o *Source) bool {
 		return false
 	}
 
-	if math.Abs(*s.MinRes-*o.MinRes) > 1e-8 {
+	if (s.MinRes == nil && o.MinRes != nil) || (s.MinRes != nil && o.MinRes == nil) || (s.MinRes != nil && math.Abs(*s.MinRes-*o.MinRes) > 1e-8) {
 		return false
 	}
 
-	if math.Abs(*s.MaxRes-*o.MaxRes) > 1e-8 {
+	if (s.MaxRes == nil && o.MaxRes != nil) || (s.MaxRes != nil && o.MaxRes == nil) || (s.MaxRes != nil && math.Abs(*s.MaxRes-*o.MaxRes) > 1e-8) {
 		return false
 	}
 

@@ -29,6 +29,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	AppLabelKey = "pdok.nl/app"
+)
+
 type WMTSReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
@@ -182,17 +186,15 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	}
 	// end region HorizontalAutoScaler
 
-	// region IngressRoute
+	// region IngressRoutes
 	if obj.Spec.Options.IncludeIngress {
-		ingress := getBareIngressRoute(obj)
-		operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, ingress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, ingress, func() error {
-			return mutateIngressRoute(r, obj, ingress)
-		})
+		err = createOrUpdateIngressRoutes(ctx, r, obj, operationResults)
 		if err != nil {
-			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, ingress), err)
+			return operationResults, fmt.Errorf("unable to create/update resource %s: %w", "Ingressroutes", err)
 		}
+
 	}
-	// end region IngressRoute
+	// end region IngressRoutes
 
 	// region Service
 	{
@@ -207,6 +209,29 @@ func createOrUpdateAllForWMTS(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	// end region Service
 
 	return operationResults, nil
+}
+
+func createOrUpdateIngressRoutes(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS, operationResults map[string]controllerutil.OperationResult) error {
+	var err error
+	reconcilerClient := r.Client
+
+	mapproxyIngress := getBareIngressRoute(obj, constants.MapproxyName)
+	operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, mapproxyIngress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, mapproxyIngress, func() error {
+		return mutateDirectIngressRoute(r, obj, mapproxyIngress)
+	})
+	if err != nil {
+		return fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, mapproxyIngress), err)
+	}
+
+	restfulIngress := getBareIngressRoute(obj, constants.MapproxyName+"-restful")
+	operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, restfulIngress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, restfulIngress, func() error {
+		return mutateRestfulIngressRoute(r, obj, restfulIngress)
+	})
+	if err != nil {
+		return fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, restfulIngress), err)
+	}
+
+	return nil
 }
 
 func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdoknlv2.WMTS) (hashedConfigMapNames types.HashedConfigMapNames, operationResults map[string]controllerutil.OperationResult, err error) { //nolint:revive
@@ -238,27 +263,6 @@ func createOrUpdateConfigMaps(ctx context.Context, r *WMTSReconciler, obj *pdokn
 	}
 
 	return hashedConfigMapNames, operationResults, err
-}
-
-func mutateConfigMap(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.ConfigMap) error { //nolint:unused
-	reconcilerClient := r.Client
-	labels := smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels())
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
-
-	configMap.Immutable = smoothoperatorutils.Pointer(true)
-	configMap.Data = map[string]string{}
-	//nolint:gocritic
-	//updateConfigMapWithStaticFiles(configMap, obj)
-
-	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, configMap, configMap); err != nil {
-		return err
-	}
-	if err := ctrl.SetControllerReference(obj, configMap, r.Scheme); err != nil {
-		return err
-	}
-	return smoothoperatorutils.AddHashSuffix(configMap)
 }
 
 func getBareDeployment(obj *pdoknlv2.WMTS) *appsv1.Deployment {
@@ -314,7 +318,8 @@ func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *
 	return nil
 }
 
-func addCommonLabels(obj *pdoknlv2.WMTS, labels map[string]string) map[string]string { //nolint:revive
+func addCommonLabels(_ *pdoknlv2.WMTS, labels map[string]string) map[string]string { //nolint:revive
+	labels[AppLabelKey] = constants.MapproxyName
 	return labels
 }
 

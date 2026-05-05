@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/smooth-operator/model"
@@ -25,9 +26,17 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 		includeIngress = *src.Spec.Options.IncludeIngress
 	}
 
-	metaSize := "[9,9]"
+	var metaSize *v2.CacheMetaSize
 	if src.Spec.Options.MetaSize != nil {
-		metaSize = *src.Spec.Options.MetaSize
+		withoutBrackets := (*src.Spec.Options.MetaSize)[1 : len(*src.Spec.Options.MetaSize)-1]
+		split := strings.Split(withoutBrackets, ",")
+		rows, _ := strconv.Atoi(split[0])
+		cols, _ := strconv.Atoi(split[1])
+
+		metaSize = &v2.CacheMetaSize{
+			Rows: rows,
+			Cols: cols,
+		}
 	}
 
 	result := v2.WMTS{

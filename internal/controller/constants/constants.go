@@ -7,8 +7,9 @@ const (
 	KvpToRestfulName          = "wmts-kvp-to-restful"
 	MapproxyName              = "mapproxy"
 
-	MapserverPortNr int32 = 80
-	ApachePortNr    int32 = 9117
+	MapserverPortNr    int32 = 80
+	ApachePortNr       int32 = 9117
+	MapproxyPortNumber int32 = 9001
 
 	BaseVolumeName = "base"
 	DataVolumeName = "data"

@@ -42,12 +42,14 @@ spec:
         resources: {}
   service:
     abstract: My service abstract
-    baseUrl: https://service.pdok.nl/owner/dataset/wmts/v1_0
+    baseUrl: https://test.pdok.nl/owner/dataset/wmts/v1_0
     cache:
       azure:
         blobPrefix: owner/dataset/3
         container: public
-      metaSize: '[8,8]'
+      metaSize:
+        rows: 8
+        cols: 8
     layers:
       - abstract: Testservice layer abstract
         identifier: mylayer
