@@ -1,0 +1,15 @@
+apiVersion: pdok.nl/v2
+kind: WMTS
+metadata:
+  labels:
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: datasetOwner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  name: featureinfo
+  namespace: default
+spec:
+  options:
+    cached: true
+    getFeatureInfo: true
+    includeIngress: true
