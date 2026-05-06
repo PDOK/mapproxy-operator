@@ -29,18 +29,16 @@ const (
 
 var _ = Describe("Testing WMTS Controller", func() {
 
-	wmtsReconciler := getWMTSReconciler()
-
 	Context("Testing Mutate functions for Cache WMTS", func() {
-		testMutates(&wmtsReconciler, &pdoknlv2.WMTS{}, "cache")
+		testMutates(getWMTSReconcilerPtr, &pdoknlv2.WMTS{}, "cache")
 	})
 
 	Context("Testing Mutate functions for WMTS with featureinfo", func() {
-		testMutates(&wmtsReconciler, &pdoknlv2.WMTS{}, "featureinfo")
+		testMutates(getWMTSReconcilerPtr, &pdoknlv2.WMTS{}, "featureinfo")
 	})
 
 	Context("Testing Mutate functions for WMTS without cache", func() {
-		testMutates(&wmtsReconciler, &pdoknlv2.WMTS{}, "nocache")
+		testMutates(getWMTSReconcilerPtr, &pdoknlv2.WMTS{}, "nocache")
 	})
 
 	Context("When reconciling a resource", func() {
@@ -221,4 +219,10 @@ func getWMTSReconciler() WMTSReconciler {
 			MultiToolImage:             testImageName5,
 		},
 	}
+}
+
+// function to defer construction of the reconciler to inside the test to ensure test injections
+func getWMTSReconcilerPtr() *WMTSReconciler {
+	result := getWMTSReconciler()
+	return &result
 }

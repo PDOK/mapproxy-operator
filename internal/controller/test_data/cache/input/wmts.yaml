@@ -13,3 +13,35 @@ spec:
     cached: true
     getFeatureInfo: false
     includeIngress: true
+  healthCheck:
+    mimetype: image/png
+    querystring: mylayer/EPSG:28992/1/1/1.png
+  horizontalPodAutoscalerPatch:
+    minReplicas: 2
+    maxReplicas: 8
+  ingressRouteUrls:
+    - url: https://test.example.com/dataset/dataset-owner/wmts/v1_0
+  podSpecPatch:
+    containers:
+    - env:
+      - name: AZURE_STORAGE_CONNECTION_STRING
+        valueFrom:
+          secretKeyRef:
+            key: AZURE_STORAGE_CONNECTION_STRING
+            name: mysecretblobname
+      name: mapproxy
+      resources:
+        limits:
+          ephemeral-storage: 21Mi
+    initContainers:
+    - envFrom:
+      - configMapRef:
+          name: mysecretblobname
+      - secretRef:
+          name: mysecretblobname
+      name: blob-download
+      resources: { }
+  service:
+    title: My service title
+    abstract: My service abstract
+    baseUrl: https://test.example.com/dataset/dataset-owner/wmts/v1_0

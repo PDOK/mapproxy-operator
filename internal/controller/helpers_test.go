@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func testMutates(reconciler *WMTSReconciler, resource *pdoknlv2.WMTS, name string, ignoreFiles ...string) {
+func testMutates(reconcilerFn func() *WMTSReconciler, resource *pdoknlv2.WMTS, name string, ignoreFiles ...string) {
 	inputPath := testPath(name) + "input/"
 	outputPath := testPath(name) + "expected/"
 
@@ -74,50 +74,50 @@ func testMutates(reconciler *WMTSReconciler, resource *pdoknlv2.WMTS, name strin
 	It("Should generate a correct CapabilitiesGenerator Configmap", func() {
 		cm := getBareConfigMap(resource, constants.CapabilitiesGeneratorName)
 		testMutateConfigMap(cm, outputPath+"configmap-capabilities-generator.yaml", func(cm *corev1.ConfigMap) error {
-			return mutateConfigMapCapabilitiesGenerator(reconciler, resource, cm)
+			return mutateConfigMapCapabilitiesGenerator(reconcilerFn(), resource, cm)
 		}, true)
 		configMapNames.CapabilitiesGenerator = cm.Name
 	})
 
 	It("Should generate a Deployment correctly", func() {
 		testMutate("Deployment", getBareDeployment(resource), outputPath+"deployment.yaml", func(d *appsv1.Deployment) error {
-			return mutateDeployment(reconciler, resource, d, configMapNames)
+			return mutateDeployment(reconcilerFn(), resource, d, configMapNames)
 		})
 	})
 
 	It("Should generate a correct Service", func() {
 		testMutate("Service", getBareService(resource), outputPath+"service.yaml", func(s *corev1.Service) error {
-			return mutateService(reconciler, resource, s)
+			return mutateService(reconcilerFn(), resource, s)
 		})
 	})
 
 	It("Should generate a correct Headers Middleware", func() {
 		testMutate("Headers Middleware", getBareCorsHeadersMiddleware(resource), outputPath+"middleware-headers.yaml", func(m *traefikiov1alpha1.Middleware) error {
-			return mutateCorsHeadersMiddleware(reconciler, resource, m)
+			return mutateCorsHeadersMiddleware(reconcilerFn(), resource, m)
 		})
 	})
 
 	It("Should generate a correct IngressRoute", func() {
 		testMutate("IngressRoute", getBareIngressRoute(resource, ""), outputPath+"ingressroute.yaml", func(i *traefikiov1alpha1.IngressRoute) error {
-			return mutateDirectIngressRoute(reconciler, resource, i)
+			return mutateDirectIngressRoute(reconcilerFn(), resource, i)
 		})
 	})
 
 	It("Should generate a correct IngressRoute", func() {
 		testMutate("IngressRoute", getBareIngressRoute(resource, "-restful"), outputPath+"ingressroute-restful.yaml", func(i *traefikiov1alpha1.IngressRoute) error {
-			return mutateRestfulIngressRoute(reconciler, resource, i)
+			return mutateRestfulIngressRoute(reconcilerFn(), resource, i)
 		})
 	})
 
 	It("Should generate a correct PodDisruptionBudget", func() {
 		testMutate("PodDisruptionBudget", getBarePodDisruptionBudget(resource), outputPath+"poddisruptionbudget.yaml", func(p *policyv1.PodDisruptionBudget) error {
-			return mutatePodDisruptionBudget(reconciler, resource, p)
+			return mutatePodDisruptionBudget(reconcilerFn(), resource, p)
 		})
 	})
 
 	It("Should generate a correct HorizontalPodAutoscaler", func() {
 		testMutate("PodDisruptionBudget", getBareHorizontalPodAutoScaler(resource), outputPath+"horizontalpodautoscaler.yaml", func(h *v2.HorizontalPodAutoscaler) error {
-			return mutateHorizontalPodAutoscaler(reconciler, resource, h)
+			return mutateHorizontalPodAutoscaler(reconcilerFn(), resource, h)
 		})
 	})
 }
