@@ -189,7 +189,7 @@ var _ = Describe("Testing WMTS Controller", func() {
 			err := validation.LoadSchemasForCRD(cfg, "default", "wmts.pdok.nl")
 			Expect(err).NotTo(HaveOccurred())
 
-			filepath := "input/wms.yaml"
+			filepath := "input/wmts.yaml"
 			testCases := []string{
 				testPath("cache") + filepath,
 				testPath("featureinfo") + filepath,

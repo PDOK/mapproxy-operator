@@ -3,7 +3,7 @@ kind: WMTS
 metadata:
   labels:
     pdok.nl/dataset-id: dataset
-    pdok.nl/owner-id: datasetOwner
+    pdok.nl/owner-id: owner
     pdok.nl/service-type: wmts
     pdok.nl/service-version: v1_0
   name: cache
@@ -45,3 +45,31 @@ spec:
     title: My service title
     abstract: My service abstract
     baseUrl: https://test.example.com/dataset/dataset-owner/wmts/v1_0
+    cache:
+      azure:
+        blobPrefix: owner
+        container: tiles
+      metaSize:
+        rows: 8
+        cols: 8
+    layers:
+      - abstract: My layer abstract
+        identifier: layer1identifier
+        source:
+          wms:
+            layers:
+              - layer1identifier
+            styles: []
+            url: https://my-wms-mapserver/mapserver?MAP_RESOLUTION=92
+        styles:
+          - identifier: default
+            legend:
+              blobKey: resources/images/owner/dataset/mylegendpicture.png
+        title: My layer title
+    tileMatrixSets:
+      - crs: EPSG:28992
+        zoomLevels:
+          - 0-12
+      - crs: EPSG:3857
+        zoomLevels:
+          - 13-15

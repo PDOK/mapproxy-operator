@@ -1,0 +1,59 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: cache-wmts-mapproxy
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: cache
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  selector:
+    matchLabels:
+      pdok.nl/app: mapproxy
+      pdok.nl/dataset-id: dataset
+      pdok.nl/owner-id: owner
+      pdok.nl/service-type: wmts
+      pdok.nl/service-version: v1_0
+  template:
+    metadata:
+      labels:
+        pdok.nl/app: mapproxy
+        pdok.nl/dataset-id: dataset
+        pdok.nl/owner-id: owner
+        pdok.nl/service-type: wmts
+        pdok.nl/service-version: v1_0
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        priority.version-checker.io/mapproxy: "4"
+        priority.version-checker.io/wmts-kvp-to-restful: "4"
+        prometheus.io/port: "9117"
+        prometheus.io/scrape: "true"
+    spec:
+      containers: []
+      volumes:
+        - name: "data"
+          emptyDir: {}
+        - name: "mapproxy"
+          configMap: {}
+        - name: "lighttpd"
+        - name: "capabilities-generator"
+      initContainers: []
+      restartPolicy: "Always"
+      terminationGracePeriodSeconds: 60
+      dnsPolicy: "ClusterFirst"
+  strategy:
+    type: "RollingUpdate"
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 4
+  revisionHistoryLimit: 1
