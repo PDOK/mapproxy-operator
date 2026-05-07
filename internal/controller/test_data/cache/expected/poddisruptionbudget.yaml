@@ -1,0 +1,2 @@
+kind: PodDisruptionBudget
+apiVersion: policy/v1

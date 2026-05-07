@@ -1,0 +1,2 @@
+kind: IngressRoute
+apiVersion: traefik.io/v1alpha1
