@@ -64,7 +64,7 @@ var _ = Describe("Testing WMTS Controller", func() {
 			Expect(err).NotTo(HaveOccurred())
 			err = yaml.UnmarshalStrict(data, &testWMTS)
 			Expect(err).NotTo(HaveOccurred())
-			Expect(testWMTS.Name).Should(Equal("complete"))
+			Expect(testWMTS.Name).Should(Equal("cache"))
 
 			objectKeyWMTS = k8stypes.NamespacedName{
 				Namespace: testWMTS.GetNamespace(),

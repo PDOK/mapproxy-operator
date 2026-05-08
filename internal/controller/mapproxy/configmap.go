@@ -103,7 +103,7 @@ func getMapproxyGlobals(obj *pdoknlv2.WMTS) Globals {
 			Rows: 1,
 			Cols: 1,
 		}
-		if obj.Spec.Service.Cache.MetaSize != nil {
+		if obj.Spec.Service.Cache != nil && obj.Spec.Service.Cache.MetaSize != nil {
 			metaSize = *obj.Spec.Service.Cache.MetaSize
 		}
 	}

@@ -136,8 +136,9 @@ type WMTSService struct {
 	TileMatrixSets []TileMatrixSet `json:"tileMatrixSets"`
 	// Queryable layers
 	Layers []WMTSLayer `json:"layers"`
-	// Backing cache layer configuration
-	Cache WMTSCache `json:"cache"`
+	// Backing cache layer configuration, only if cache is enabled
+	// +kubebuilder:validation:Optional
+	Cache *WMTSCache `json:"cache,omitempty"`
 }
 
 // HorizontalPodAutoscalerPatch - copy of autoscalingv2.HorizontalPodAutoscalerSpec without ScaleTargetRef
@@ -259,8 +260,9 @@ type SourceWMS struct {
 type WMTSCache struct {
 	// +kubebuilder:validation:Optional
 	MetaSize *CacheMetaSize `json:"metaSize,omitempty"`
-	// The azure block. At the moment it is the only cache backing option
-	Azure AzureCache `json:"azure"`
+	// The azure block. At the moment it is the only cache backing option. Not functional if caching is disabled
+	// +kubebuilder:validation:Optional
+	Azure *AzureCache `json:"azure,omitempty"`
 }
 
 // CacheMetaSize The number of rows and columns that mapproxy retrieves at once
