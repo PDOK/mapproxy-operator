@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func testMutates(reconcilerFn func() *WMTSReconciler, resource *pdoknlv2.WMTS, name string, ignoreFiles ...string) {
+func testMutates(reconcilerFn func() *WMTSReconciler, resource *pdoknlv2.WMTS, name string, _ ...string) {
 	inputPath := testPath(name) + "input/"
 	outputPath := testPath(name) + "expected/"
 
@@ -111,6 +111,10 @@ func readTestFile(fileName string) ([]byte, error) {
 	// Apply defaults
 	un := unstructured.Unstructured{}
 	err = yaml.Unmarshal(dat, &un)
+	if err != nil {
+		return []byte{}, err
+	}
+
 	defaulted, err := validation.ApplySchemaDefaults(un.Object)
 	if err != nil {
 		return []byte{}, err
@@ -150,7 +154,7 @@ func testMutate[T any](kind string, result *T, expectedFile string, mutate func(
 }
 
 //nolint:unparam
-func testMutateConfigMap(m *corev1.ConfigMap, expectedFile string, mutate func(*corev1.ConfigMap) error, ignoreValues bool) {
+func testMutateConfigMap(m *corev1.ConfigMap, expectedFile string, mutate func(*corev1.ConfigMap) error, ignoreValues bool) { //nolint:unparam
 	clearConfigMapValues := func(cm *corev1.ConfigMap) {
 		newMap := map[string]string{}
 		for k := range cm.Data {
@@ -183,7 +187,7 @@ func testMutateConfigMap(m *corev1.ConfigMap, expectedFile string, mutate func(*
 	}
 }
 
-func getExpectedObjects(ctx context.Context, obj *pdoknlv2.WMTS, includeBlobDownload bool, includeMapfileGeneratorConfigMap bool) ([]client.Object, error) {
+func getExpectedObjects(_ context.Context, obj *pdoknlv2.WMTS) ([]client.Object, error) { //nolint:unparam
 	objects := []client.Object{
 		getBareDeployment(obj),
 		getBareHorizontalPodAutoScaler(obj),
@@ -193,24 +197,6 @@ func getExpectedObjects(ctx context.Context, obj *pdoknlv2.WMTS, includeBlobDown
 		getBareCorsHeadersMiddleware(obj),
 		getBarePodDisruptionBudget(obj),
 	}
-
-	//// Add all ConfigMaps with hashed names
-	//cm := getBareConfigMap(obj, constants.MapproxyName)
-	//hashedName, err :=  getHashedConfigMapNameFromClient(ctx, obj, constants.MapserverName)
-	//if err != nil {
-	//	return objects, err
-	//}
-	//cm.Name = hashedName
-	//objects = append(objects, cm)
-	//
-	//
-	//cm = getBareConfigMap(obj, constants.CapabilitiesGeneratorName)
-	//hashedName, err = getHashedConfigMapNameFromClient(ctx, obj, constants.ConfigMapCapabilitiesGeneratorVolumeName)
-	//if err != nil {
-	//	return objects, err
-	//}
-	//cm.Name = hashedName
-	//objects = append(objects, cm)
 
 	return objects, nil
 }

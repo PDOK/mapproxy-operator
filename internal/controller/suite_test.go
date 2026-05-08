@@ -165,17 +165,6 @@ func getFirstFoundEnvTestBinaryDir() string {
 	return ""
 }
 
-func getOwnerInfoCRDPath() (string, error) {
-	smoothOperatorModule, err := getModule("github.com/pdok/smooth-operator")
-	if err != nil {
-		return "", err
-	}
-	if smoothOperatorModule.Dir == "" {
-		return "", errors.New("cannot find path for smooth-operator module")
-	}
-	return filepath.Join(smoothOperatorModule.Dir, "config", "crd", "bases", "pdok.nl_ownerinfo.yaml"), nil
-}
-
 func getTraefikCRDPath() (string, error) {
 	traefikModule, err := getModule("github.com/traefik/traefik/v3")
 	if err != nil {

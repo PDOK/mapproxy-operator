@@ -90,7 +90,7 @@ var _ = Describe("Testing WMTS Controller", func() {
 		})
 
 		It("Should create all expected resources", func() {
-			expectedResources, err := getExpectedObjects(ctx, clusterWMTS, true, true)
+			expectedResources, err := getExpectedObjects(ctx, clusterWMTS)
 			Expect(err).NotTo(HaveOccurred())
 
 			for _, expectedResource := range expectedResources {
