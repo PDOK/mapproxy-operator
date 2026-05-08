@@ -167,9 +167,11 @@ spec:
         - name: "data"
           emptyDir: {}
         - name: "mapproxy"
-          configMap: {}
+          configMap:
+            name: featureinfo-wmts-mapproxy-dh6k64mfd9
         - name: "lighttpd"
-          configMap: {}
+          configMap:
+            name: featureinfo-wmts-mapproxy-dh6k64mfd9
         - name: "capabilities-generator"
           configMap:
             name: "featureinfo-wmts-capabilities-generator-dg95hb7k27"

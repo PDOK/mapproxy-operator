@@ -167,9 +167,11 @@ spec:
         - name: "data"
           emptyDir: {}
         - name: "mapproxy"
-          configMap: {}
+          configMap:
+            name: nocache-wmts-mapproxy-424df77m9b
         - name: "lighttpd"
-          configMap: {}
+          configMap:
+            name: nocache-wmts-mapproxy-424df77m9b
         - name: "capabilities-generator"
           configMap:
             name: "nocache-wmts-capabilities-generator-bcmfg842m7"

@@ -43,40 +43,20 @@ func testMutates(reconcilerFn func() *WMTSReconciler, resource *pdoknlv2.WMTS, n
 
 	configMapNames := types.HashedConfigMapNames{}
 
-	//It("Should generate a correct Configmap", func() {
-	//	cm := getBareConfigMap(resource, constants.MapserverName)
-	//	testMutateConfigMap(cm, outputPath+"configmap-mapserver.yaml", func(cm *corev1.ConfigMap) error {
-	//		return mutateConfigMap(reconciler, resource, cm)
-	//	}, true)
-	//	configMapNames.Mapserver = cm.Name
-	//})
-	//
-	//It("Should generate a correct BlobDownload Configmap", func() {
-	//	if path, include := shouldIncludeFile("configmap-init-scripts.yaml"); include {
-	//		cm := getBareConfigMap(resource, constants.InitScriptsName)
-	//		testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
-	//			return mutateConfigMapBlobDownload(reconciler, resource, cm)
-	//		}, true)
-	//		configMapNames.InitScripts = cm.Name
-	//	}
-	//})
-	//
-	//It("Should generate a correct MapfileGenerator Configmap", func() {
-	//	if path, include := shouldIncludeFile("configmap-mapfile-generator.yaml"); include {
-	//		cm := getBareConfigMap(resource, constants.MapfileGeneratorName)
-	//		testMutateConfigMap(cm, path, func(cm *corev1.ConfigMap) error {
-	//			return mutateConfigMapMapfileGenerator(reconciler, resource, cm)
-	//		}, true)
-	//		configMapNames.MapfileGenerator = cm.Name
-	//	}
-	//})
-
 	It("Should generate a correct CapabilitiesGenerator Configmap", func() {
 		cm := getBareConfigMap(resource, constants.CapabilitiesGeneratorName)
 		testMutateConfigMap(cm, outputPath+"configmap-capabilities-generator.yaml", func(cm *corev1.ConfigMap) error {
 			return mutateConfigMapCapabilitiesGenerator(reconcilerFn(), resource, cm)
 		}, true)
 		configMapNames.CapabilitiesGenerator = cm.Name
+	})
+
+	It("Should generate a correct Mapproxy Configmap", func() {
+		cm := getBareConfigMap(resource, constants.MapproxyName)
+		testMutateConfigMap(cm, outputPath+"configmap-mapproxy.yaml", func(cm *corev1.ConfigMap) error {
+			return mutateConfigMapMapProxy(reconcilerFn(), resource, cm)
+		}, true)
+		configMapNames.Mapproxy = cm.Name
 	})
 
 	It("Should generate a Deployment correctly", func() {
@@ -215,8 +195,8 @@ func getExpectedObjects(ctx context.Context, obj *pdoknlv2.WMTS, includeBlobDown
 	}
 
 	//// Add all ConfigMaps with hashed names
-	//cm := getBareConfigMap(obj, constants.MapserverName)
-	//hashedName, err := getHashedConfigMapNameFromClient(ctx, obj, constants.MapserverName)
+	//cm := getBareConfigMap(obj, constants.MapproxyName)
+	//hashedName, err :=  getHashedConfigMapNameFromClient(ctx, obj, constants.MapserverName)
 	//if err != nil {
 	//	return objects, err
 	//}
