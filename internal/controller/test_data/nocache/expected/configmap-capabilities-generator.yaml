@@ -1,7 +1,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: cache-wmts-capabilities-generator-bcmfg842m7
+  name: nocache-wmts-capabilities-generator-bcmfg842m7
   namespace: default
   labels:
     pdok.nl/app: mapproxy
@@ -12,7 +12,7 @@ metadata:
   ownerReferences:
     - apiVersion: pdok.nl/v2
       kind: WMTS
-      name: cache
+      name: nocache
       uid: ""
       controller: true
       blockOwnerDeletion: true

@@ -1,0 +1,33 @@
+kind: IngressRoute
+apiVersion: traefik.io/v1alpha1
+metadata:
+  name: featureinfo-wmts-mapproxy
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: featureinfo
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+  annotations:
+    "uptime.pdok.nl/id": "d7f6f209ba241b771ef8d8e79ee9cdd4d893f88d"
+    "uptime.pdok.nl/name": "DATASET dataset owner v1_0 WMTS"
+    "uptime.pdok.nl/tags": "public-stats,wmts"
+    "uptime.pdok.nl/url":  "https://test.example.com/dataset/dataset-owner/wmts/v1_0/mylayer/EPSG:28992/1/1/1.png"
+spec:
+  routes:
+    - match: "(Host(`localhost`) || Host(`test.example.com`)) && Path(`/dataset/dataset-owner/wmts/v1_0`)"
+      kind: "Rule"
+      services:
+        - name: featureinfo-wmts-mapproxy
+          kind: "Service"
+          port: 9001
+      middlewares:
+        - name: featureinfo-wmts-mapproxy-headers

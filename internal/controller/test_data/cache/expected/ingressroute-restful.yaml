@@ -1,2 +1,30 @@
 kind: IngressRoute
 apiVersion: traefik.io/v1alpha1
+metadata:
+  name: cache-wmts-mapproxy-restful
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: cache
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+  annotations:
+    "uptime.pdok.nl/ignore": "-"
+spec:
+  routes:
+    - match: "(Host(`localhost`) || Host(`test.example.com`)) && PathPrefix(`/dataset/dataset-owner/wmts/v1_0/`)"
+      kind: "Rule"
+      services:
+        - name: cache-wmts-mapproxy
+          kind: "Service"
+          port: 80
+      middlewares:
+        - name: cache-wmts-mapproxy-headers

@@ -180,7 +180,7 @@ spec:
             - /bin/sh
             - "-c"
           args:
-            - "set -e;\nrclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;\nmkdir -p /var/www/images\nrclone copyto blobs:/resources/images/owner/dataset/mylegendpicture.png /var/www/images/mylegendpicture.png"
+            - "set -e;\nrclone config create --non-interactive --obscure blobs azureblob endpoint $BLOBS_ENDPOINT account $BLOBS_ACCOUNT key $BLOBS_KEY use_emulator true;\nmkdir -p /var/www/images;\nrclone copyto blobs:/resources/images/owner/dataset/mylegendpicture.png /var/www/images/mylegendpicture.png;\n"
           envFrom:
             - configMapRef:
                 name: "mysecretblobname"

@@ -1,0 +1,50 @@
+kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+metadata:
+  name: featureinfo-wmts-mapproxy
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: featureinfo
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  minReplicas: 2
+  maxReplicas: 8
+  scaleTargetRef:
+    kind: Deployment
+    name: featureinfo-wmts-mapproxy
+    apiVersion: apps/v1
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 90
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: "Max"
+      policies:
+        - periodSeconds: 60
+          type: Pods
+          value: 20
+    scaleDown:
+      stabilizationWindowSeconds: 3600
+      selectPolicy: "Max"
+      policies:
+        - periodSeconds: 600
+          type: Percent
+          value: 10
+        - periodSeconds: 600
+          type: Pods
+          value: 1

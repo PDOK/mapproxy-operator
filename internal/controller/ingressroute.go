@@ -24,7 +24,7 @@ func SetUptimeOperatorAnnotations(set bool) {
 func getBareIngressRoute(obj *pdoknlv2.WMTS, suffix string) *traefikiov1alpha1.IngressRoute {
 	return &traefikiov1alpha1.IngressRoute{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getSuffixedName(obj, suffix),
+			Name:      obj.Name + "-wmts-mapproxy" + suffix,
 			Namespace: obj.GetNamespace(),
 		},
 	}

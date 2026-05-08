@@ -215,7 +215,7 @@ func createOrUpdateIngressRoutes(ctx context.Context, r *WMTSReconciler, obj *pd
 	var err error
 	reconcilerClient := r.Client
 
-	mapproxyIngress := getBareIngressRoute(obj, constants.MapproxyName)
+	mapproxyIngress := getBareIngressRoute(obj, "")
 	operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, mapproxyIngress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, mapproxyIngress, func() error {
 		return mutateDirectIngressRoute(r, obj, mapproxyIngress)
 	})
@@ -223,7 +223,7 @@ func createOrUpdateIngressRoutes(ctx context.Context, r *WMTSReconciler, obj *pd
 		return fmt.Errorf("unable to create/update resource %s: %w", smoothoperatorutils.GetObjectFullName(reconcilerClient, mapproxyIngress), err)
 	}
 
-	restfulIngress := getBareIngressRoute(obj, constants.MapproxyName+"-restful")
+	restfulIngress := getBareIngressRoute(obj, "-restful")
 	operationResults[smoothoperatorutils.GetObjectFullName(reconcilerClient, restfulIngress)], err = controllerutil.CreateOrUpdate(ctx, reconcilerClient, restfulIngress, func() error {
 		return mutateRestfulIngressRoute(r, obj, restfulIngress)
 	})

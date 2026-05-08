@@ -1,7 +1,7 @@
 kind: IngressRoute
 apiVersion: traefik.io/v1alpha1
 metadata:
-  name: cache-wmts
+  name: cache-wmts-mapproxy
   namespace: default
   labels:
     pdok.nl/app: mapproxy
@@ -16,3 +16,18 @@ metadata:
       uid: ""
       controller: true
       blockOwnerDeletion: true
+  annotations:
+    "uptime.pdok.nl/id": "e4b92ed5dec5e0fc02722aacc539b54f37ccec5f"
+    "uptime.pdok.nl/name": "DATASET dataset owner v1_0 WMTS"
+    "uptime.pdok.nl/tags": "public-stats,wmts"
+    "uptime.pdok.nl/url":  "https://test.example.com/dataset/dataset-owner/wmts/v1_0/mylayer/EPSG:28992/1/1/1.png"
+spec:
+  routes:
+    - match: "(Host(`localhost`) || Host(`test.example.com`)) && Path(`/dataset/dataset-owner/wmts/v1_0`)"
+      kind: "Rule"
+      services:
+        - name: cache-wmts-mapproxy
+          kind: "Service"
+          port: 9001
+      middlewares:
+        - name: cache-wmts-mapproxy-headers
