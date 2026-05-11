@@ -1,0 +1,21 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cache-wmts-capabilities-generator-bcmfg842m7
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: cache
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+immutable: true
+data:
+  input.yaml: "IGNORED"

@@ -80,14 +80,14 @@ func GetBlobDownloadInitContainer(obj *pdoknlv2.WMTS, images types.Images) (*cor
 func GetArgs(blobkeys []string) (args string, err error) {
 	var sb strings.Builder
 	createConfig(&sb)
-	writeLine(&sb, "mkdir -p /var/www/images")
+	writeLine(&sb, "mkdir -p /var/www/images;")
 	for _, blobKey := range blobkeys {
 		fileName, err := getFilenameFromBlobKey(blobKey)
 		if err != nil {
 			return "", err
 		}
 
-		writeLine(&sb, "rclone copyto blobs:/%s %s/%s", blobKey, legendPath, fileName)
+		writeLine(&sb, "rclone copyto blobs:/%s %s/%s;", blobKey, legendPath, fileName)
 	}
 
 	return sb.String(), nil

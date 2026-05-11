@@ -1,0 +1,68 @@
+apiVersion: pdok.nl/v2
+kind: WMTS
+metadata:
+  labels:
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  name: nocache
+  namespace: default
+spec:
+  options:
+    cached: false
+    getFeatureInfo: false
+    includeIngress: true
+  healthCheck:
+    mimetype: image/png
+    querystring: mylayer/EPSG:28992/1/1/1.png
+  horizontalPodAutoscalerPatch:
+    minReplicas: 2
+    maxReplicas: 8
+  ingressRouteUrls:
+    - url: https://test.example.com/dataset/dataset-owner/wmts/v1_0
+  podSpecPatch:
+    containers:
+    - env:
+      - name: AZURE_STORAGE_CONNECTION_STRING
+        valueFrom:
+          secretKeyRef:
+            key: AZURE_STORAGE_CONNECTION_STRING
+            name: mysecretblobname
+      name: mapproxy
+      resources:
+        limits:
+          ephemeral-storage: 21Mi
+    initContainers:
+    - envFrom:
+      - configMapRef:
+          name: mysecretblobname
+      - secretRef:
+          name: mysecretblobname
+      name: blob-download
+      resources: { }
+  service:
+    title: My service title
+    abstract: My service abstract
+    baseUrl: https://test.example.com/dataset/dataset-owner/wmts/v1_0
+    layers:
+      - abstract: My layer abstract
+        identifier: layer1identifier
+        source:
+          wms:
+            layers:
+              - layer1identifier
+            styles: []
+            url: https://my-wms-mapserver/mapserver?MAP_RESOLUTION=92
+        styles:
+          - identifier: default
+            legend:
+              blobKey: resources/images/owner/dataset/mylegendpicture.png
+        title: My layer title
+    tileMatrixSets:
+      - crs: EPSG:28992
+        zoomLevels:
+          - 0-12
+      - crs: EPSG:3857
+        zoomLevels:
+          - 13-15

@@ -54,6 +54,7 @@ func AddGeneralValidationErrorsAndWarnings(wmts *WMTS, warnings *[]string, allEr
 	checkLayerIdentifiers(wmts, warnings, allErrs)
 	checkZoomLevels(wmts, warnings, allErrs)
 	checkReplicas(wmts, allErrs)
+	checkCache(wmts, allErrs)
 
 	err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wmts.Spec.IngressRouteURLs, wmts.Spec.Service.BaseURL, nil)
 	if err != nil {
@@ -150,6 +151,21 @@ func checkZoomLevels(wmts *WMTS, _ *[]string, allErrs *field.ErrorList) {
 			}
 			intranges = append(intranges, zoomLevelRange)
 
+		}
+	}
+}
+
+// if cache is enabled, cache information should be provided. if cache is disabled, no cache information should be provided
+func checkCache(wmts *WMTS, allErrs *field.ErrorList) {
+	cached := wmts.Spec.Options == nil || wmts.Spec.Options.Cached
+	path := field.NewPath("spec").Child("service").Child("cache").Child("azure")
+	if cached {
+		if wmts.Spec.Service.Cache == nil || wmts.Spec.Service.Cache.Azure == nil {
+			*allErrs = append(*allErrs, field.Invalid(path, wmts.Spec.Service.Cache, "Cache is enabled but no cache information is specified"))
+		}
+	} else {
+		if wmts.Spec.Service.Cache != nil && wmts.Spec.Service.Cache.Azure != nil {
+			*allErrs = append(*allErrs, field.Invalid(path, wmts.Spec.Service.Cache, "Cache is disabled but cache information was specified"))
 		}
 	}
 }

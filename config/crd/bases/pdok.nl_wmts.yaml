@@ -781,8 +781,6 @@ spec:
                         - cols
                         - rows
                         type: object
-                    required:
-                    - azure
                     type: object
                   layers:
                     description: Queryable layers
@@ -893,7 +891,6 @@ spec:
                 required:
                 - abstract
                 - baseUrl
-                - cache
                 - layers
                 - tileMatrixSets
                 - title

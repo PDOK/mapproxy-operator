@@ -26,16 +26,28 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 		includeIngress = *src.Spec.Options.IncludeIngress
 	}
 
-	var metaSize *v2.CacheMetaSize
-	if src.Spec.Options.MetaSize != nil {
-		withoutBrackets := (*src.Spec.Options.MetaSize)[1 : len(*src.Spec.Options.MetaSize)-1]
-		split := strings.Split(withoutBrackets, ",")
-		rows, _ := strconv.Atoi(split[0])
-		cols, _ := strconv.Atoi(split[1])
+	var cache *v2.WMTSCache
+	if src.Spec.Options.Cached == nil || *src.Spec.Options.Cached {
 
-		metaSize = &v2.CacheMetaSize{
-			Rows: rows,
-			Cols: cols,
+		var metaSize *v2.CacheMetaSize
+		if src.Spec.Options.MetaSize != nil {
+			withoutBrackets := (*src.Spec.Options.MetaSize)[1 : len(*src.Spec.Options.MetaSize)-1]
+			split := strings.Split(withoutBrackets, ",")
+			rows, _ := strconv.Atoi(split[0])
+			cols, _ := strconv.Atoi(split[1])
+
+			metaSize = &v2.CacheMetaSize{
+				Rows: rows,
+				Cols: cols,
+			}
+		}
+
+		cache = &v2.WMTSCache{
+			MetaSize: metaSize,
+			Azure: &v2.AzureCache{
+				Container:  "tiles",
+				BlobPrefix: src.Spec.Service.BlobPath,
+			},
 		}
 	}
 
@@ -65,13 +77,7 @@ func (src *WMTS) ToV2() (v2.WMTS, error) {
 				AccessConstraints: nil,
 				TileMatrixSets:    getTileMatrixSets(src),
 				Layers:            getLayers(src),
-				Cache: v2.WMTSCache{
-					MetaSize: metaSize,
-					Azure: v2.AzureCache{
-						Container:  "tiles",
-						BlobPrefix: src.Spec.Service.BlobPath,
-					},
-				},
+				Cache:             cache,
 			},
 		},
 		Status: model.OperatorStatus{},

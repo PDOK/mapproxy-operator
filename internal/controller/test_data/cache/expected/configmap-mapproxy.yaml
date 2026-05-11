@@ -1,0 +1,23 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: cache-wmts-mapproxy-62mk576bkh
+  namespace: default
+  labels:
+    pdok.nl/app: mapproxy
+    pdok.nl/dataset-id: dataset
+    pdok.nl/owner-id: owner
+    pdok.nl/service-type: wmts
+    pdok.nl/service-version: v1_0
+  ownerReferences:
+    - apiVersion: pdok.nl/v2
+      kind: WMTS
+      name: cache
+      uid: ""
+      controller: true
+      blockOwnerDeletion: true
+immutable: true
+data:
+  include.conf: "IGNORED"
+  mapproxy.yaml: "IGNORED"
+  response.lua: "IGNORED"
