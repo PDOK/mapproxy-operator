@@ -1,6 +1,8 @@
 package utils //nolint:revive
 
 import (
+	"net/url"
+
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
@@ -349,4 +351,9 @@ var FeatureInfo = v2.WMTS{ //nolint:dupl
 			},
 		},
 	},
+}
+
+func mustParseURL(input string) *url.URL {
+	result, _ := url.Parse(input)
+	return result
 }
