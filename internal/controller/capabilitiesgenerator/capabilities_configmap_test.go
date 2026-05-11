@@ -638,7 +638,6 @@ services:
             serviceMetadataUrl:
                 href: https://test.example.com/owner/nocache/wmts/v1_0/WMTSCapabilities.xml
 `
-
 var expectedConfigStringFeatureInfo = `
 global:
     prefix: wmts

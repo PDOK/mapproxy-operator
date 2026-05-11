@@ -751,11 +751,12 @@ spec:
                     pattern: ^https?://.+/.+
                     type: string
                   cache:
-                    description: Backing cache layer configuration
+                    description: Backing cache layer configuration, only if cache
+                      is enabled
                     properties:
                       azure:
                         description: The azure block. At the moment it is the only
-                          cache backing option
+                          cache backing option. Not functional if caching is disabled
                         properties:
                           blobPrefix:
                             description: The blob store prefix on the container
