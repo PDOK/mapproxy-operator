@@ -1,4 +1,4 @@
-package utils
+package utils //nolint:revive
 
 import (
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
@@ -29,7 +29,7 @@ var TestImages = types.Images{
 }
 
 var cacheURL = mustParseURL("https://test.example.com/owner/cache/wmts/v1_0")
-var Cache = v2.WMTS{
+var Cache = v2.WMTS{ //nolint:dupl
 	TypeMeta: v2.TypeMetaWMTS,
 	ObjectMeta: metav1.ObjectMeta{
 		Name: "owner-cache",
@@ -241,7 +241,7 @@ var NoCache = v2.WMTS{
 }
 
 var featureInfoURL = mustParseURL("https://test.example.com/owner/featureinfo/wmts/v1_0")
-var FeatureInfo = v2.WMTS{
+var FeatureInfo = v2.WMTS{ //nolint:dupl
 	TypeMeta: v2.TypeMetaWMTS,
 	ObjectMeta: metav1.ObjectMeta{
 		Name: "owner-featureinfo",
