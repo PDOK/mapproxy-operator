@@ -2,6 +2,7 @@ package utils
 
 import (
 	v2 "github.com/pdok/mapproxy-operator/api/v2"
+	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	smoothoperatormodel "github.com/pdok/smooth-operator/model"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -10,6 +11,22 @@ import (
 )
 
 // Sample WMTS'ses useful for testing
+
+const (
+	testImageName1 = "test.test/image:test1"
+	testImageName2 = "test.test/image:test2"
+	testImageName3 = "test.test/image:test3"
+	testImageName4 = "test.test/image:test4"
+	testImageName5 = "test.test/image:test5"
+)
+
+var TestImages = types.Images{
+	ApacheExporterImage:        testImageName1,
+	CapabilitiesGeneratorImage: testImageName2,
+	KvpToRestfulImage:          testImageName3,
+	MapproxyImage:              testImageName4,
+	MultiToolImage:             testImageName5,
+}
 
 var cacheURL = mustParseURL("https://test.example.com/owner/cache/wmts/v1_0")
 var Cache = v2.WMTS{
@@ -34,7 +51,21 @@ var Cache = v2.WMTS{
 			MaxReplicas: ptr.To(int32(8)),
 		},
 		PodSpecPatch: corev1.PodSpec{
-			InitContainers: []corev1.Container{},
+			InitContainers: []corev1.Container{
+				{
+					Name: "blob-download",
+					EnvFrom: []corev1.EnvFromSource{{
+						ConfigMapRef: &corev1.ConfigMapEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}, {
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}},
+					Resources: corev1.ResourceRequirements{},
+				},
+			},
 			Containers: []corev1.Container{{
 				Name: "mapproxy",
 				Env: []corev1.EnvVar{{
@@ -131,7 +162,21 @@ var NoCache = v2.WMTS{
 			MaxReplicas: ptr.To(int32(8)),
 		},
 		PodSpecPatch: corev1.PodSpec{
-			InitContainers: []corev1.Container{},
+			InitContainers: []corev1.Container{
+				{
+					Name: "blob-download",
+					EnvFrom: []corev1.EnvFromSource{{
+						ConfigMapRef: &corev1.ConfigMapEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}, {
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}},
+					Resources: corev1.ResourceRequirements{},
+				},
+			},
 			Containers: []corev1.Container{{
 				Name: "mapproxy",
 				Env: []corev1.EnvVar{{
@@ -218,7 +263,21 @@ var FeatureInfo = v2.WMTS{
 			MaxReplicas: ptr.To(int32(8)),
 		},
 		PodSpecPatch: corev1.PodSpec{
-			InitContainers: []corev1.Container{},
+			InitContainers: []corev1.Container{
+				{
+					Name: "blob-download",
+					EnvFrom: []corev1.EnvFromSource{{
+						ConfigMapRef: &corev1.ConfigMapEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}, {
+						SecretRef: &corev1.SecretEnvSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: "mysecretblobreference"},
+						},
+					}},
+					Resources: corev1.ResourceRequirements{},
+				},
+			},
 			Containers: []corev1.Container{{
 				Name: "mapproxy",
 				Env: []corev1.EnvVar{{
