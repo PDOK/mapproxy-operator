@@ -55,6 +55,7 @@ func AddGeneralValidationErrorsAndWarnings(wmts *WMTS, warnings *[]string, allEr
 	checkZoomLevels(wmts, warnings, allErrs)
 	checkReplicas(wmts, allErrs)
 	checkCache(wmts, allErrs)
+	checkBlobEnvironmentVariables(wmts, allErrs)
 
 	err := sharedValidation.ValidateIngressRouteURLsContainsBaseURL(wmts.Spec.IngressRouteURLs, wmts.Spec.Service.BaseURL, nil)
 	if err != nil {
@@ -167,6 +168,41 @@ func checkCache(wmts *WMTS, allErrs *field.ErrorList) {
 		if wmts.Spec.Service.Cache != nil && wmts.Spec.Service.Cache.Azure != nil {
 			*allErrs = append(*allErrs, field.Invalid(path, wmts.Spec.Service.Cache, "Cache is disabled but cache information was specified"))
 		}
+	}
+}
+
+func checkBlobEnvironmentVariables(wmts *WMTS, allErrs *field.ErrorList) {
+	hasMapproxyEnvVars := false
+	hasBlobEnvVars := false
+
+	containers := wmts.Spec.PodSpecPatch.Containers
+	initContainers := wmts.Spec.PodSpecPatch.InitContainers
+
+	for _, container := range containers {
+		if container.Name == "mapproxy" {
+			if len(container.Env) > 0 || len(container.EnvFrom) > 0 {
+				hasMapproxyEnvVars = true
+				break
+			}
+		}
+	}
+
+	for _, container := range initContainers {
+		if container.Name == "blob-download" {
+			if len(container.Env) > 0 || len(container.EnvFrom) > 0 {
+				hasBlobEnvVars = true
+				break
+			}
+		}
+	}
+
+	path := field.NewPath("spec").Child("podSpecPatch")
+	if !hasMapproxyEnvVars {
+		*allErrs = append(*allErrs, field.Invalid(path, containers, "No environment variables for the blob store are provided to the mapproxy container"))
+	}
+
+	if !hasBlobEnvVars {
+		*allErrs = append(*allErrs, field.Invalid(path, initContainers, "No environment variables for the blob store are provided to the blob-download init-container"))
 	}
 }
 

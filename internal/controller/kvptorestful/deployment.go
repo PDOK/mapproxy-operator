@@ -32,9 +32,11 @@ func GetKvpToRestfulContainer(images *types.Images) (*corev1.Container, error) {
 			Name:      "data",
 			MountPath: "/var/www",
 		}},
-		LivenessProbe:   probe,
-		ReadinessProbe:  probe,
-		ImagePullPolicy: corev1.PullIfNotPresent,
+		LivenessProbe:            probe,
+		ReadinessProbe:           probe,
+		ImagePullPolicy:          corev1.PullIfNotPresent,
+		TerminationMessagePath:   "/dev/termination-log",
+		TerminationMessagePolicy: "File",
 	}
 
 	return &result, nil

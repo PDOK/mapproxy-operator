@@ -19,7 +19,6 @@ import (
 )
 
 const (
-	namespace      = "default"
 	testImageName1 = "test.test/image:test1"
 	testImageName2 = "test.test/image:test2"
 	testImageName3 = "test.test/image:test3"
