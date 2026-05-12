@@ -18,14 +18,15 @@ metadata:
       blockOwnerDeletion: true
 spec:
   ports:
-    - name: mapproxy
-      protocol: "TCP"
+    - name: lighttpd
       port: 80
-      targetPort: 80
-    - name: metric
-      protocol: "TCP"
+      protocol: TCP
+    - name: apache-exporter
       port: 9117
-      targetPort: 9117
+      protocol: TCP
+    - name: wmts-kvp-to-restful
+      port: 9001
+      protocol: TCP
   selector:
     pdok.nl/app: mapproxy
     pdok.nl/dataset-id: dataset

@@ -14,10 +14,13 @@ const (
 	BaseVolumeName = "base"
 	DataVolumeName = "data"
 
-	configSuffix                             = "-config"
 	ConfigMapCapabilitiesGeneratorVolumeName = CapabilitiesGeneratorName
 	LighttpdVolumeName                       = "lighttpd"
 	MapproxyVolumeName                       = "mapproxy"
 
 	BlobsTilesBucket = "tiles"
+
+	LighttpdPortName     = "lighttpd"
+	ApacheExportPortName = ApacheExporterName
+	KvpToRestfulPortName = KvpToRestfulName
 )
