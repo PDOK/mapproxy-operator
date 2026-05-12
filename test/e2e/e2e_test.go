@@ -34,7 +34,7 @@ import (
 )
 
 // namespace where the project is deployed in
-const namespace = "mapproxy-operator-system"
+const namespace = "services"
 
 // serviceAccountName created for the project
 const serviceAccountName = "mapproxy-operator-controller-manager"
