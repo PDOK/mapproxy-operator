@@ -146,7 +146,7 @@ var _ = Describe("Manager", Ordered, func() {
 			verifyControllerUp := func(g Gomega) {
 				// Get the name of the controller-manager pod
 				cmd := exec.Command("kubectl", "get",
-					"pods", "-l", "control-plane=controller-manager",
+					"pods", "-l", "app=mapproxy-operator",
 					"-o", "go-template={{ range .items }}"+
 						"{{ if not .metadata.deletionTimestamp }}"+
 						"{{ .metadata.name }}"+
