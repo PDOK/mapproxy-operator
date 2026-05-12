@@ -6,13 +6,7 @@ import (
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
-)
-
-const (
-	mapserverWebserviceProxyPortNr = 9111
-	metricPortName                 = "metric"
 )
 
 func getBareService(obj *pdoknlv2.WMTS) *corev1.Service {
@@ -35,20 +29,21 @@ func mutateService(r *WMTSReconciler, obj *pdoknlv2.WMTS, service *corev1.Servic
 
 	ports := []corev1.ServicePort{
 		{
-			Name:       constants.MapproxyName,
-			Port:       constants.MapserverPortNr,
-			TargetPort: intstr.FromInt32(constants.MapserverPortNr),
-			Protocol:   corev1.ProtocolTCP,
+			Name:     constants.LighttpdPortName,
+			Port:     constants.MapserverPortNr,
+			Protocol: corev1.ProtocolTCP,
+		},
+		{
+			Name:     constants.ApacheExportPortName,
+			Port:     constants.ApachePortNr,
+			Protocol: corev1.ProtocolTCP,
+		},
+		{
+			Name:     constants.KvpToRestfulPortName,
+			Port:     constants.MapproxyPortNumber,
+			Protocol: corev1.ProtocolTCP,
 		},
 	}
-
-	// Add port here to get the same port order as the odl ansible operator
-	ports = append(ports, corev1.ServicePort{
-		Name:       metricPortName,
-		Port:       constants.ApachePortNr,
-		TargetPort: intstr.FromInt32(constants.ApachePortNr),
-		Protocol:   corev1.ProtocolTCP,
-	})
 
 	service.Spec = corev1.ServiceSpec{
 		Type:                  corev1.ServiceTypeClusterIP,
