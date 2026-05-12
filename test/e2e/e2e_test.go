@@ -97,10 +97,6 @@ var _ = Describe("Manager", Ordered, func() {
 	// After each test, check for failures and collect logs, events,
 	// and pod descriptions for debugging.
 	AfterEach(func() {
-		allPodsCommand := exec.Command("kubectl", "get", "pods", "--all-namespaces")
-		podOutput, _ := utils.Run(allPodsCommand)
-		println(podOutput)
-
 		specReport := CurrentSpecReport()
 		if specReport.Failed() {
 			By("Fetching controller manager pod logs")
