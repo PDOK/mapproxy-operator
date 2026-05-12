@@ -9,11 +9,6 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-const (
-	mapserverWebserviceProxyPortNr = 9111
-	metricPortName                 = "metric"
-)
-
 func getBareService(obj *pdoknlv2.WMTS) *corev1.Service {
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
