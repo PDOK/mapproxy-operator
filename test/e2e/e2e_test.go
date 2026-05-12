@@ -98,7 +98,7 @@ var _ = Describe("Manager", Ordered, func() {
 	// and pod descriptions for debugging.
 	AfterEach(func() {
 		allPodsCommand := exec.Command("kubectl", "get", "pods", "--all-namespaces")
-		podOutput, err := utils.Run(allPodsCommand)
+		podOutput, _ := utils.Run(allPodsCommand)
 		println(podOutput)
 
 		specReport := CurrentSpecReport()
