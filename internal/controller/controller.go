@@ -66,6 +66,15 @@ func (r *WMTSReconciler) Reconcile(ctx context.Context, req ctrl.Request) (resul
 		return result, client.IgnoreNotFound(err)
 	}
 
+	// Start of code block required for safe migration of v1 to v2, after migration this block can safely be removed
+	// this field does not exist on the v1 version of the WMTS and is required on the v2 version of the WMTS, making it a good tell
+	if wmts.Spec.Service.BaseURL.URL == nil || wmts.Spec.Service.BaseURL.String() == "" {
+		err := errors.New("detected v1 version of WMTS, failing reconcile")
+		lgr.Error(err, "detected v1 version of WMTS, failing reconcile")
+		return result, err
+	}
+	// end of migration code block
+
 	// Recover from a panic so we can add the error to the status of the Atom
 	defer func() {
 		if rec := recover(); rec != nil {
