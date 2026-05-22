@@ -22,10 +22,7 @@ const (
 func mutateConfigMapCapabilitiesGenerator(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.ConfigMap) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		input, err := capabilitiesgenerator.GetInput(obj)
@@ -48,10 +45,7 @@ func mutateConfigMapCapabilitiesGenerator(r *WMTSReconciler, obj *pdoknlv2.WMTS,
 func mutateConfigMapMapProxy(r *WMTSReconciler, obj *pdoknlv2.WMTS, configMap *corev1.ConfigMap) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, configMap, labels); err != nil {
-		return err
-	}
+	configMap.Labels = getObjectLabels(obj, configMap.Labels)
 
 	if len(configMap.Data) == 0 {
 		configMap.Data = map[string]string{}

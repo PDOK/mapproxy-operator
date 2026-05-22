@@ -327,9 +327,16 @@ func createOrUpdateOrDeletePodDisruptionBudget(ctx context.Context, reconciler *
 	return nil
 }
 
-func addCommonLabels(_ *pdoknlv2.WMTS, labels map[string]string) map[string]string { //nolint:revive
-	labels[AppLabelKey] = constants.MapproxyName
-	return labels
+var defaultLabels = map[string]string{AppLabelKey: constants.MapproxyName}
+
+func getLabelSelector(wmts *pdoknlv2.WMTS) *metav1.LabelSelector {
+	return &metav1.LabelSelector{
+		MatchLabels: smoothoperatorutils.CombineLabels(wmts.Labels, defaultLabels),
+	}
+}
+
+func getObjectLabels(wmts *pdoknlv2.WMTS, objLabels map[string]string) map[string]string {
+	return smoothoperatorutils.CombineLabels(objLabels, wmts.Labels, defaultLabels)
 }
 
 // SetupWithManager sets up the controller with the Manager.

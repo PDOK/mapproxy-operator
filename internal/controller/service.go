@@ -21,11 +21,7 @@ func getBareService(obj *pdoknlv2.WMTS) *corev1.Service {
 func mutateService(r *WMTSReconciler, obj *pdoknlv2.WMTS, service *corev1.Service) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	selector := smoothoperatorutils.CloneOrEmptyMap(labels)
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, service, labels); err != nil {
-		return err
-	}
+	service.Labels = getObjectLabels(obj, service.Labels)
 
 	ports := []corev1.ServicePort{
 		{
@@ -54,7 +50,7 @@ func mutateService(r *WMTSReconciler, obj *pdoknlv2.WMTS, service *corev1.Servic
 		SessionAffinity:       corev1.ServiceAffinityNone,
 		InternalTrafficPolicy: smoothoperatorutils.Pointer(corev1.ServiceInternalTrafficPolicyCluster),
 		Ports:                 ports,
-		Selector:              selector,
+		Selector:              getLabelSelector(obj).MatchLabels,
 	}
 	if err := smoothoperatorutils.EnsureSetGVK(reconcilerClient, service, service); err != nil {
 		return err
