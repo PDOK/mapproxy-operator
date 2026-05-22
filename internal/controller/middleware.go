@@ -25,10 +25,7 @@ func getBareCorsHeadersMiddleware(obj *pdoknlv2.WMTS) *traefikiov1alpha1.Middlew
 func mutateCorsHeadersMiddleware(r *WMTSReconciler, obj *pdoknlv2.WMTS, middleware *traefikiov1alpha1.Middleware) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, middleware, labels); err != nil {
-		return err
-	}
+	middleware.Labels = getObjectLabels(obj, middleware.Labels)
 	middleware.Spec = traefikiov1alpha1.MiddlewareSpec{
 		Headers: &dynamic.Headers{
 			CustomResponseHeaders: map[string]string{

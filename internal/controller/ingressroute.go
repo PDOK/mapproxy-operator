@@ -33,10 +33,7 @@ func getBareIngressRoute(obj *pdoknlv2.WMTS, suffix string) *traefikiov1alpha1.I
 func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
-		return err
-	}
+	ingressRoute.Labels = getObjectLabels(obj, ingressRoute.Labels)
 
 	if setUptimeOperatorAnnotations {
 
@@ -72,10 +69,7 @@ func mutateDirectIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRout
 func mutateRestfulIngressRoute(r *WMTSReconciler, obj *pdoknlv2.WMTS, ingressRoute *traefikiov1alpha1.IngressRoute) error {
 	reconcilerClient := r.Client
 
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, ingressRoute, labels); err != nil {
-		return err
-	}
+	ingressRoute.Labels = getObjectLabels(obj, ingressRoute.Labels)
 
 	// restful ingress should not be considered for uptime
 	if ingressRoute.Annotations == nil {

@@ -13,11 +13,7 @@ import (
 )
 
 func mutateHorizontalPodAutoscaler(r *WMTSReconciler, obj *pdoknlv2.WMTS, autoscaler *autoscalingv2.HorizontalPodAutoscaler) error {
-	reconcilerClient := r.Client
-	labels := addCommonLabels(obj, smoothoperatorutils.CloneOrEmptyMap(obj.GetLabels()))
-	if err := smoothoperatorutils.SetImmutableLabels(reconcilerClient, autoscaler, labels); err != nil {
-		return err
-	}
+	autoscaler.Labels = getObjectLabels(obj, autoscaler.Labels)
 
 	autoscaler.Spec.MaxReplicas = 30
 	autoscaler.Spec.MinReplicas = smoothoperatorutils.Pointer(int32(2))
