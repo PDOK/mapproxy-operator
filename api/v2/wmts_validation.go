@@ -71,11 +71,13 @@ func checkReplicas(wmts *WMTS, allErrs *field.ErrorList) {
 
 	// TODO: replace hardcoded defaults with dynamic defaults from cli options or ownerInfo
 	var minReplicas, maxReplicas int32 = 2, 32
-	if patch.MinReplicas != nil {
-		minReplicas = *patch.MinReplicas
-	}
-	if patch.MaxReplicas != nil {
-		maxReplicas = *patch.MaxReplicas
+	if patch != nil {
+		if patch.MinReplicas != nil {
+			minReplicas = *patch.MinReplicas
+		}
+		if patch.MaxReplicas != nil {
+			maxReplicas = *patch.MaxReplicas
+		}
 	}
 
 	if maxReplicas < minReplicas {
