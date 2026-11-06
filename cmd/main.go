@@ -28,6 +28,7 @@ import (
 	v2 "github.com/pdok/mapproxy-operator/internal/webhook/v2"
 	smoothoperatorv1 "github.com/pdok/smooth-operator/api/v1"
 	"github.com/pdok/smooth-operator/pkg/integrations/logging"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	"github.com/peterbourgon/ff"
 	"github.com/pkg/errors"
 	traefikiov1alpha1 "github.com/traefik/traefik/v3/pkg/provider/kubernetes/crd/traefikio/v1alpha1"
@@ -107,6 +108,7 @@ func main() {
 	flag.StringVar(&kvpToRestfulImage, "kvp-to-restful-image", "", "The image to use in the kvp-to-restful init-container.")
 	flag.StringVar(&multitoolImage, "multitool-image", "", "The image to use in the blob download init-container.")
 	flag.BoolVar(&setUptimeOperatorAnnotations, "set-uptime-operator-annotations", true, "When enabled IngressRoutes get annotations that are used by the pdok/uptime-operator.")
+	reloader.BindFlag(flag.CommandLine)
 	flag.StringVar(&storageClassName, "storage-class-name", "", "The name of the storage class to use when using an ephemeral volume.")
 
 	opts := zap.Options{

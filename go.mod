@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.38.2
 	github.com/pdok/ogc-capabilities-generator v1.0.4
 	github.com/pdok/ogc-specifications v1.0.6
-	github.com/pdok/smooth-operator v1.2.10
+	github.com/pdok/smooth-operator v1.3.0
 	github.com/peterbourgon/ff v1.7.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
