@@ -10,6 +10,7 @@ import (
 	"github.com/pdok/mapproxy-operator/internal/controller/mapperutils"
 	"github.com/pdok/mapproxy-operator/internal/controller/mapproxy"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -22,6 +23,7 @@ import (
 func mutateDeployment(r *WMTSReconciler, obj *pdoknlv2.WMTS, deployment *appsv1.Deployment, configMapNames types.HashedConfigMapNames) error {
 	reconcilerClient := r.Client
 	deployment.Labels = getObjectLabels(obj, deployment.Labels)
+	reloader.SetAnnotation(deployment)
 
 	deployment.Spec.Selector = getLabelSelector(obj)
 

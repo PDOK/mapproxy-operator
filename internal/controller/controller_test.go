@@ -9,6 +9,7 @@ import (
 	pdoknlv2 "github.com/pdok/mapproxy-operator/api/v2"
 	"github.com/pdok/mapproxy-operator/internal/controller/types"
 	"github.com/pdok/smooth-operator/model"
+	"github.com/pdok/smooth-operator/pkg/reloader"
 	smoothoperatorutils "github.com/pdok/smooth-operator/pkg/util"
 	"github.com/pdok/smooth-operator/pkg/validation"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -97,6 +98,29 @@ var _ = Describe("Testing WMTS Controller", func() {
 					err := k8sClient.Get(ctx, k8stypes.NamespacedName{Namespace: expectedResource.GetNamespace(), Name: expectedResource.GetName()}, expectedResource)
 					return Expect(err).NotTo(HaveOccurred())
 				}, "10s", "1s").Should(BeTrue())
+			}
+		})
+
+		It("Should set or remove the Deployment Reloader annotation according to the flag", func() {
+			originalEnabled := reloader.IsEnabled()
+			DeferCleanup(func() {
+				reloader.SetReloaderAnnotations(originalEnabled)
+			})
+			controllerReconciler := getWMTSReconciler()
+
+			for _, enabled := range []bool{false, true, false} {
+				By(fmt.Sprintf("Reconciling with Reloader annotations enabled: %t", enabled))
+				reloader.SetReloaderAnnotations(enabled)
+				_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyWMTS})
+				Expect(err).NotTo(HaveOccurred())
+
+				deployment := getBareDeployment(clusterWMTS)
+				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)).To(Succeed())
+				if enabled {
+					Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.AutoAnnotation, reloader.AutoAnnotationValue))
+				} else {
+					Expect(deployment.Annotations).NotTo(HaveKey(reloader.AutoAnnotation))
+				}
 			}
 		})
 
