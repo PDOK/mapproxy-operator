@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"flag"
 	"fmt"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:revive // ginkgo bdd
@@ -106,20 +107,28 @@ var _ = Describe("Testing WMTS Controller", func() {
 			DeferCleanup(func() {
 				reloader.SetReloaderAnnotations(originalEnabled)
 			})
+			flags := flag.NewFlagSet("reloader", flag.ContinueOnError)
+			reloader.BindFlag(flags)
 			controllerReconciler := getWMTSReconciler()
 
-			for _, enabled := range []bool{false, true, false} {
-				By(fmt.Sprintf("Reconciling with Reloader annotations enabled: %t", enabled))
-				reloader.SetReloaderAnnotations(enabled)
+			const legacyAutoMode = "true"
+			for _, mode := range []string{"false", legacyAutoMode, "search", "auto", "false"} {
+				By("Reconciling with Reloader annotation mode: " + mode)
+				Expect(flags.Parse([]string{"--" + reloader.FlagName + "=" + mode})).To(Succeed())
 				_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{NamespacedName: objectKeyWMTS})
 				Expect(err).NotTo(HaveOccurred())
 
 				deployment := getBareDeployment(clusterWMTS)
 				Expect(k8sClient.Get(ctx, client.ObjectKeyFromObject(deployment), deployment)).To(Succeed())
-				if enabled {
+				if mode == legacyAutoMode || mode == "auto" {
 					Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.AutoAnnotation, reloader.AutoAnnotationValue))
 				} else {
 					Expect(deployment.Annotations).NotTo(HaveKey(reloader.AutoAnnotation))
+				}
+				if mode == "search" {
+					Expect(deployment.Annotations).To(HaveKeyWithValue(reloader.SearchAnnotation, reloader.SearchAnnotationValue))
+				} else {
+					Expect(deployment.Annotations).NotTo(HaveKey(reloader.SearchAnnotation))
 				}
 			}
 		})
@@ -138,8 +147,7 @@ var _ = Describe("Testing WMTS Controller", func() {
 			Expect(originalRevisionHistoryLimit).Should(Not(Equal(expectedRevisionHistoryLimit)))
 
 			By("Altering the Deployment")
-			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
-				fmt.Sprintf(`{"spec": {"revisionHistoryLimit": %d}}`, expectedRevisionHistoryLimit))))
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, fmt.Appendf(nil, `{"spec": {"revisionHistoryLimit": %d}}`, expectedRevisionHistoryLimit)))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Verifying that the Deployment was altered")
@@ -175,8 +183,7 @@ var _ = Describe("Testing WMTS Controller", func() {
 			Expect(ok).To(BeFalse())
 
 			By("Adding new label to deployment")
-			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, []byte(
-				fmt.Sprintf(`{"metadata": {"labels": {"%s": "%s"}}}`, externalLabel, externalLabel))))
+			err := k8sClient.Patch(ctx, deployment, client.RawPatch(k8stypes.MergePatchType, fmt.Appendf(nil, `{"metadata": {"labels": {"%s": "%s"}}}`, externalLabel, externalLabel)))
 			Expect(err).NotTo(HaveOccurred())
 
 			By("Verifying that the Deployment was altered")

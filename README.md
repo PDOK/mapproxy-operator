@@ -73,6 +73,17 @@ make uninstall
 make undeploy
 ```
 
+## Command-line flags
+
+### Reloader annotations
+
+Use `--set-reloader-annotations=search` to set `reloader.stakater.com/search=true` on Deployments.
+Search mode requires `reloader.stakater.com/match=true` on the referenced ConfigMaps or Secrets.
+Use `=auto` to set `reloader.stakater.com/auto=true` instead.
+For backwards compatibility, the bare flag and `=true` still select auto mode.
+The default (`=false`) disables both annotations; switching modes removes the other annotation.
+The equivalent environment variable is `SET_RELOADER_ANNOTATIONS`.
+
 ## Develop
 
 The project is written in Go and scaffolded with [kubebuilder](https://kubebuilder.io).
